@@ -118,12 +118,12 @@ extension TilingContainer {
         let lastIndex = children.indices.last
         for (i, child) in children.enumerated() {
             child.setWeight(orientation, child.getWeight(orientation) + delta)
-            let rawGap = context.resolvedGaps.inner.get(orientation).toDouble()
+            let rawGap = context.resolvedGaps.inner.get(orientation)
             // Gaps. Consider 4 cases:
             // 1. Multiple children. Layout first child
             // 2. Multiple children. Layout last child
             // 3. Multiple children. Layout child in the middle
-            // 4. Single child   let rawGap = gaps.inner.get(orientation).toDouble()
+            // 4. Single child
             let gap = rawGap - (i == 0 ? rawGap / 2 : 0) - (i == lastIndex ? rawGap / 2 : 0)
             try await child.layoutRecursive(
                 i == 0 ? point : point.addingOffset(orientation, rawGap / 2),
@@ -145,7 +145,7 @@ extension TilingContainer {
     @MainActor
     fileprivate func layoutAccordion(_ point: CGPoint, width: CGFloat, height: CGFloat, virtual: Rect, _ context: LayoutContext) async throws {
         guard let mruIndex: Int = mostRecentChild?.ownIndex else { return }
-        let padding = config.accordionPadding.toPixels(orientation, context.workspaceMonitor)
+        let padding = config.accordionPadding.toPixels(hundredPercent: context.workspaceMonitor.visibleRect.getDimension(orientation))
         for (index, child) in children.enumerated() {
             let (lPadding, rPadding): (CGFloat, CGFloat) = switch index {
                 case 0 where children.count == 1: (0, 0)

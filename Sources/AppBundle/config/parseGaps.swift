@@ -1,3 +1,4 @@
+import AppKit
 import Common
 
 struct Gaps: ConvenienceMutable, Equatable, Sendable {
@@ -7,38 +8,38 @@ struct Gaps: ConvenienceMutable, Equatable, Sendable {
     static let zero = Gaps(inner: .zero, outer: .zero)
 
     struct Inner: ConvenienceMutable, Equatable, Sendable {
-        var vertical: DynamicConfigValue<Int>
-        var horizontal: DynamicConfigValue<Int>
+        var vertical: DynamicConfigValue<PixelsOrPercent>
+        var horizontal: DynamicConfigValue<PixelsOrPercent>
 
-        static let zero = Inner(vertical: 0, horizontal: 0)
+        static let zero = Inner(vertical: .pixels(0), horizontal: .pixels(0))
 
-        init(vertical: Int, horizontal: Int) {
+        init(vertical: PixelsOrPercent, horizontal: PixelsOrPercent) {
             self.vertical = .constant(vertical)
             self.horizontal = .constant(horizontal)
         }
 
-        init(vertical: DynamicConfigValue<Int>, horizontal: DynamicConfigValue<Int>) {
+        init(vertical: DynamicConfigValue<PixelsOrPercent>, horizontal: DynamicConfigValue<PixelsOrPercent>) {
             self.vertical = vertical
             self.horizontal = horizontal
         }
     }
 
     struct Outer: ConvenienceMutable, Equatable, Sendable {
-        var left: DynamicConfigValue<Int>
-        var bottom: DynamicConfigValue<Int>
-        var top: DynamicConfigValue<Int>
-        var right: DynamicConfigValue<Int>
+        var left: DynamicConfigValue<PixelsOrPercent>
+        var bottom: DynamicConfigValue<PixelsOrPercent>
+        var top: DynamicConfigValue<PixelsOrPercent>
+        var right: DynamicConfigValue<PixelsOrPercent>
 
-        static let zero = Outer(left: 0, bottom: 0, top: 0, right: 0)
+        static let zero = Outer(left: .pixels(0), bottom: .pixels(0), top: .pixels(0), right: .pixels(0))
 
-        init(left: Int, bottom: Int, top: Int, right: Int) {
+        init(left: PixelsOrPercent, bottom: PixelsOrPercent, top: PixelsOrPercent, right: PixelsOrPercent) {
             self.left = .constant(left)
             self.bottom = .constant(bottom)
             self.top = .constant(top)
             self.right = .constant(right)
         }
 
-        init(left: DynamicConfigValue<Int>, bottom: DynamicConfigValue<Int>, top: DynamicConfigValue<Int>, right: DynamicConfigValue<Int>) {
+        init(left: DynamicConfigValue<PixelsOrPercent>, bottom: DynamicConfigValue<PixelsOrPercent>, top: DynamicConfigValue<PixelsOrPercent>, right: DynamicConfigValue<PixelsOrPercent>) {
             self.left = left
             self.bottom = bottom
             self.top = top
@@ -52,32 +53,36 @@ struct ResolvedGaps {
     let outer: Outer
 
     struct Inner {
-        let vertical: Int
-        let horizontal: Int
+        let vertical: CGFloat
+        let horizontal: CGFloat
 
-        func get(_ orientation: Orientation) -> Int {
+        func get(_ orientation: Orientation) -> CGFloat {
             orientation == .h ? horizontal : vertical
         }
     }
 
     struct Outer {
-        let left: Int
-        let bottom: Int
-        let top: Int
-        let right: Int
+        let left: CGFloat
+        let bottom: CGFloat
+        let top: CGFloat
+        let right: CGFloat
     }
 
+    /// Horizontal gaps are resolved against the monitor width, and vertical gaps are resolved against the monitor height
     @MainActor init(gaps: Gaps, monitor: any MonitorInfo) {
+        let width = monitor.visibleRect.width
+        let height = monitor.visibleRect.height
+
         inner = .init(
-            vertical: gaps.inner.vertical.getValue(for: monitor),
-            horizontal: gaps.inner.horizontal.getValue(for: monitor),
+            vertical: gaps.inner.vertical.getValue(for: monitor).toPixels(hundredPercent: height),
+            horizontal: gaps.inner.horizontal.getValue(for: monitor).toPixels(hundredPercent: width),
         )
 
         outer = .init(
-            left: gaps.outer.left.getValue(for: monitor),
-            bottom: gaps.outer.bottom.getValue(for: monitor),
-            top: gaps.outer.top.getValue(for: monitor),
-            right: gaps.outer.right.getValue(for: monitor),
+            left: gaps.outer.left.getValue(for: monitor).toPixels(hundredPercent: width),
+            bottom: gaps.outer.bottom.getValue(for: monitor).toPixels(hundredPercent: height),
+            top: gaps.outer.top.getValue(for: monitor).toPixels(hundredPercent: height),
+            right: gaps.outer.right.getValue(for: monitor).toPixels(hundredPercent: width),
         )
     }
 }
@@ -88,19 +93,19 @@ private let gapsParser: [String: any ParserProtocol<Gaps>] = [
 ]
 
 private let innerParser: [String: any ParserProtocol<Gaps.Inner>] = [
-    "vertical": Parser(\.vertical, parseIntDynamicValue),
-    "horizontal": Parser(\.horizontal, parseIntDynamicValue),
+    "vertical": Parser(\.vertical, parseGapDynamicValue),
+    "horizontal": Parser(\.horizontal, parseGapDynamicValue),
 ]
 
 private let outerParser: [String: any ParserProtocol<Gaps.Outer>] = [
-    "left": Parser(\.left, parseIntDynamicValue),
-    "bottom": Parser(\.bottom, parseIntDynamicValue),
-    "top": Parser(\.top, parseIntDynamicValue),
-    "right": Parser(\.right, parseIntDynamicValue),
+    "left": Parser(\.left, parseGapDynamicValue),
+    "bottom": Parser(\.bottom, parseGapDynamicValue),
+    "top": Parser(\.top, parseGapDynamicValue),
+    "right": Parser(\.right, parseGapDynamicValue),
 ]
 
-private func parseIntDynamicValue(_ raw: OrderedJson, _ backtrace: ConfigBacktrace, _ c: inout ConfigParserContext) -> DynamicConfigValue<Int> {
-    parseDynamicValue(raw, ofType: Int.self, 0, backtrace, &c)
+private func parseGapDynamicValue(_ raw: OrderedJson, _ backtrace: ConfigBacktrace, _ c: inout ConfigParserContext) -> DynamicConfigValue<PixelsOrPercent> {
+    parseDynamicValue(raw, .pixels(0), backtrace, &c)
 }
 
 func parseGaps(_ raw: OrderedJson, _ backtrace: ConfigBacktrace, _ c: inout ConfigParserContext) -> Gaps {

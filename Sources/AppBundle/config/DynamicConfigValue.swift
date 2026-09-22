@@ -12,6 +12,17 @@ enum DynamicConfigValue<Value: Equatable>: Equatable {
 }
 extension DynamicConfigValue: Sendable where Value: Sendable {}
 
+/// A value that ``DynamicConfigValue`` can hold. It's parsed from a single TOML scalar
+protocol SimpleConfigValue: Equatable {
+    static func parseSimple(_ raw: OrderedJson, _ backtrace: ConfigBacktrace) -> ResOrConfigParseDiagnostic<Self>
+}
+
+extension PixelsOrPercent: SimpleConfigValue {
+    static func parseSimple(_ raw: OrderedJson, _ backtrace: ConfigBacktrace) -> ResOrConfigParseDiagnostic<PixelsOrPercent> {
+        parsePixelsOrPercent(raw, backtrace)
+    }
+}
+
 extension DynamicConfigValue {
     @MainActor func getValue(for monitor: any MonitorInfo) -> Value {
         switch self {
@@ -30,41 +41,36 @@ extension DynamicConfigValue {
     }
 }
 
-func parseDynamicValue<T>(
+func parseDynamicValue<T: SimpleConfigValue>(
     _ raw: OrderedJson,
-    ofType valueType: T.Type,
     _ fallback: T,
     _ backtrace: ConfigBacktrace,
     _ c: inout ConfigParserContext,
 ) -> DynamicConfigValue<T> {
-    if let simpleValue = parseSimpleType(raw, ofType: T.self) {
-        return .constant(simpleValue)
-    } else if let array = raw.asArrayOrNil {
-        if array.isEmpty {
-            c.errors.append(.init(backtrace, "The array must not be empty"))
-            return .constant(fallback)
-        }
+    guard let array = raw.asArrayOrNil else {
+        return .constant(T.parseSimple(raw, backtrace).getOrNil(appendErrorTo: &c.errors) ?? fallback)
+    }
 
-        guard let defaultValue = array.last.flatMap({ parseSimpleType($0, ofType: T.self) }) else {
-            c.errors.append(.init(backtrace, "The last item in the array must be of type \(T.self)"))
-            return .constant(fallback)
-        }
-
-        if array.dropLast().isEmpty {
-            c.errors.append(.init(backtrace, "The array must contain at least one monitor pattern"))
-            return .constant(fallback)
-        }
-
-        let rules: [PerMonitorValue<T>] = parsePerMonitorValues(array.dropLast(), backtrace, &c)
-
-        return .perMonitor(rules, default: defaultValue)
-    } else {
-        c.errors.append(.init(backtrace, "Unsupported type: \(raw.tomlType), expected: \(valueType) or array"))
+    guard let last = array.last else {
+        c.errors.append(.init(backtrace, "The array must not be empty"))
         return .constant(fallback)
     }
+
+    guard let defaultValue = T.parseSimple(last, backtrace + .index(array.count - 1)).getOrNil(appendErrorTo: &c.errors) else {
+        return .constant(fallback)
+    }
+
+    if array.dropLast().isEmpty {
+        c.errors.append(.init(backtrace, "The array must contain at least one monitor pattern"))
+        return .constant(fallback)
+    }
+
+    let rules: [PerMonitorValue<T>] = parsePerMonitorValues(array.dropLast(), backtrace, &c)
+
+    return .perMonitor(rules, default: defaultValue)
 }
 
-func parsePerMonitorValues<T>(_ array: OrderedJson.JsonArray, _ backtrace: ConfigBacktrace, _ c: inout ConfigParserContext) -> [PerMonitorValue<T>] {
+func parsePerMonitorValues<T: SimpleConfigValue>(_ array: OrderedJson.JsonArray, _ backtrace: ConfigBacktrace, _ c: inout ConfigParserContext) -> [PerMonitorValue<T>] {
     array.enumerated().compactMap { (index: Int, raw: OrderedJson) -> PerMonitorValue<T>? in
         var backtrace = backtrace + .index(index)
 
@@ -79,10 +85,7 @@ func parsePerMonitorValues<T>(_ array: OrderedJson.JsonArray, _ backtrace: Confi
 
         guard let monitorDescription = monitorDescriptionResult.getOrNil(appendErrorTo: &c.errors) else { return nil }
 
-        guard let value = parseSimpleType(value, ofType: T.self) else {
-            c.errors.append(.init(backtrace, "Expected type is '\(T.self)'. But actual type is '\(value.tomlType)'"))
-            return nil
-        }
+        guard let value = T.parseSimple(value, backtrace).getOrNil(appendErrorTo: &c.errors) else { return nil }
 
         return PerMonitorValue(description: monitorDescription, value: value)
     }

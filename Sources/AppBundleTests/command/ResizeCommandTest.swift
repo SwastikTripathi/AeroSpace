@@ -7,22 +7,28 @@ final class ResizeCommandTest: XCTestCase {
     override func setUp() async throws { setUpWorkspacesForTests() }
 
     func testParseCommand() {
-        testParseSingleCommandSucc("resize smart +10", ResizeCmdArgs(rawArgs: [], dimension: .smart, units: .add(10)))
-        testParseSingleCommandSucc("resize smart -10", ResizeCmdArgs(rawArgs: [], dimension: .smart, units: .subtract(10)))
-        testParseSingleCommandSucc("resize smart 10", ResizeCmdArgs(rawArgs: [], dimension: .smart, units: .set(10)))
+        testParseSingleCommandSucc("resize smart +10", ResizeCmdArgs(rawArgs: [], dimension: .smart, units: .add(.pixels(10))))
+        testParseSingleCommandSucc("resize smart -10", ResizeCmdArgs(rawArgs: [], dimension: .smart, units: .subtract(.pixels(10))))
+        testParseSingleCommandSucc("resize smart 10", ResizeCmdArgs(rawArgs: [], dimension: .smart, units: .set(.pixels(10))))
 
-        testParseSingleCommandSucc("resize smart-opposite +10", ResizeCmdArgs(rawArgs: [], dimension: .smartOpposite, units: .add(10)))
-        testParseSingleCommandSucc("resize smart-opposite -10", ResizeCmdArgs(rawArgs: [], dimension: .smartOpposite, units: .subtract(10)))
-        testParseSingleCommandSucc("resize smart-opposite 10", ResizeCmdArgs(rawArgs: [], dimension: .smartOpposite, units: .set(10)))
+        testParseSingleCommandSucc("resize smart +10%", ResizeCmdArgs(rawArgs: [], dimension: .smart, units: .add(.percent(10))))
+        testParseSingleCommandSucc("resize smart -10%", ResizeCmdArgs(rawArgs: [], dimension: .smart, units: .subtract(.percent(10))))
+        testParseSingleCommandSucc("resize smart 10%", ResizeCmdArgs(rawArgs: [], dimension: .smart, units: .set(.percent(10))))
 
-        testParseSingleCommandSucc("resize height 10", ResizeCmdArgs(rawArgs: [], dimension: .height, units: .set(10)))
-        testParseSingleCommandSucc("resize width 10", ResizeCmdArgs(rawArgs: [], dimension: .width, units: .set(10)))
+        testParseSingleCommandSucc("resize smart-opposite +10", ResizeCmdArgs(rawArgs: [], dimension: .smartOpposite, units: .add(.pixels(10))))
+        testParseSingleCommandSucc("resize smart-opposite -10", ResizeCmdArgs(rawArgs: [], dimension: .smartOpposite, units: .subtract(.pixels(10))))
+        testParseSingleCommandSucc("resize smart-opposite 10", ResizeCmdArgs(rawArgs: [], dimension: .smartOpposite, units: .set(.pixels(10))))
+
+        testParseSingleCommandSucc("resize height 10", ResizeCmdArgs(rawArgs: [], dimension: .height, units: .set(.pixels(10))))
+        testParseSingleCommandSucc("resize width 10", ResizeCmdArgs(rawArgs: [], dimension: .width, units: .set(.pixels(10))))
+        testParseSingleCommandSucc("resize width 25%", ResizeCmdArgs(rawArgs: [], dimension: .width, units: .set(.percent(25))))
 
         testParseCommandFail("resize s 10", msg: """
             ERROR: Can't parse 's'.
                    Possible values: (width|height|smart|smart-opposite)
             """, exitCode: 2)
-        testParseCommandFail("resize smart foo", msg: "ERROR: <number> argument must be a number", exitCode: 2)
+        testParseCommandFail("resize smart foo", msg: "ERROR: <number> argument must be a number, optionally suffixed with '%'", exitCode: 2)
+        testParseCommandFail("resize smart 10px", msg: "ERROR: <number> argument must be a number, optionally suffixed with '%'", exitCode: 2)
     }
 
     func testWidthAdd_growsTargetShrinksSiblings() async {
@@ -77,6 +83,59 @@ final class ResizeCommandTest: XCTestCase {
         assertEquals(window1.hWeight, 6)
         assertEquals(window2.hWeight, 3)
         assertEquals(window3.hWeight, 3)
+    }
+
+    func testWidthSetPercent_isRelativeToTheMonitorWidth() async {
+        var window1: Window!
+        var window2: Window!
+        var window3: Window!
+        Workspace.get(byName: name).rootTilingContainer.apply {
+            window1 = TestWindow.new(id: 1, parent: $0, adaptiveWeight: 640)
+            window2 = TestWindow.new(id: 2, parent: $0, adaptiveWeight: 640)
+            window3 = TestWindow.new(id: 3, parent: $0, adaptiveWeight: 640)
+        }
+        _ = window1.focusWindow()
+
+        await parseCommand("resize width 25%").cmdOrDie.run(.defaultEnv, .emptyStdin)
+        // 25% of the test monitor width (1920) is 480. diff = 480 - 640 = -160, childDiff = -80
+        assertEquals(window1.hWeight, 480)
+        assertEquals(window2.hWeight, 720)
+        assertEquals(window3.hWeight, 720)
+    }
+
+    func testWidthAddPercent_isRelativeToTheMonitorWidth() async {
+        var window1: Window!
+        var window2: Window!
+        var window3: Window!
+        Workspace.get(byName: name).rootTilingContainer.apply {
+            window1 = TestWindow.new(id: 1, parent: $0, adaptiveWeight: 640)
+            window2 = TestWindow.new(id: 2, parent: $0, adaptiveWeight: 640)
+            window3 = TestWindow.new(id: 3, parent: $0, adaptiveWeight: 640)
+        }
+        _ = window1.focusWindow()
+
+        await parseCommand("resize width +10%").cmdOrDie.run(.defaultEnv, .emptyStdin)
+        // 10% of the test monitor width (1920) is 192. childDiff = 192 / (3 - 1) = 96
+        assertEquals(window1.hWeight, 832)
+        assertEquals(window2.hWeight, 544)
+        assertEquals(window3.hWeight, 544)
+    }
+
+    func testHeightSubtractPercent_isRelativeToTheMonitorHeight() async {
+        var window1: Window!
+        var window2: Window!
+        Workspace.get(byName: name).rootTilingContainer.apply {
+            TilingContainer.newVTiles(parent: $0, adaptiveWeight: 1).apply {
+                window1 = TestWindow.new(id: 1, parent: $0, adaptiveWeight: 540)
+                window2 = TestWindow.new(id: 2, parent: $0, adaptiveWeight: 540)
+            }
+        }
+        _ = window1.focusWindow()
+
+        await parseCommand("resize height -10%").cmdOrDie.run(.defaultEnv, .emptyStdin)
+        // 10% of the test monitor height (1080) is 108. childDiff = -108 / (2 - 1) = -108
+        assertEquals(window1.vWeight, 432)
+        assertEquals(window2.vWeight, 648)
     }
 
     func testHeight_climbsToVerticalAncestor() async {

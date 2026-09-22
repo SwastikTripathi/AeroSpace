@@ -9,7 +9,7 @@ public struct ResizeCmdArgs: CmdArgs {
         ],
         posArgs: [
             newMandatoryPosArgParser(\.dimension, parseDimension, placeholder: "(smart|smart-opposite|width|height)"),
-            newMandatoryPosArgParser(\.units, parseUnits, placeholder: "[+|-]<number>"),
+            newMandatoryPosArgParser(\.units, parseUnits, placeholder: "[+|-]<number>[%]"),
         ],
     )
 
@@ -32,9 +32,9 @@ public struct ResizeCmdArgs: CmdArgs {
     }
 
     public enum Units: Equatable, Sendable {
-        case set(UInt)
-        case add(UInt)
-        case subtract(UInt)
+        case set(PixelsOrPercent)
+        case add(PixelsOrPercent)
+        case subtract(PixelsOrPercent)
     }
 }
 
@@ -47,13 +47,13 @@ private func parseDimension(i: PosArgParserInput) -> ParsedCliArgs<ResizeCmdArgs
 }
 
 private func parseUnits(i: PosArgParserInput) -> ParsedCliArgs<ResizeCmdArgs.Units> {
-    if let number = UInt(i.arg.removePrefix("+").removePrefix("-")) {
+    if let number = PixelsOrPercent.parse(i.arg.removePrefix("+").removePrefix("-")) {
         switch true {
             case i.arg.starts(with: "+"): .succ(.add(number), advanceBy: 1)
             case i.arg.starts(with: "-"): .succ(.subtract(number), advanceBy: 1)
             default: .succ(.set(number), advanceBy: 1)
         }
     } else {
-        .fail("<number> argument must be a number", advanceBy: 1)
+        .fail("<number> argument must be a number, optionally suffixed with '%'", advanceBy: 1)
     }
 }

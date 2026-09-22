@@ -496,22 +496,22 @@ final class ConfigTest: XCTestCase {
             Gaps(
                 inner: .init(
                     vertical: .perMonitor(
-                        [PerMonitorValue(description: .main, value: 1), PerMonitorValue(description: .secondary, value: 2)],
-                        default: 5,
+                        [PerMonitorValue(description: .main, value: .pixels(1)), PerMonitorValue(description: .secondary, value: .pixels(2))],
+                        default: .pixels(5),
                     ),
-                    horizontal: .constant(10),
+                    horizontal: .constant(.pixels(10)),
                 ),
                 outer: .init(
-                    left: .constant(12),
-                    bottom: .constant(13),
+                    left: .constant(.pixels(12)),
+                    bottom: .constant(.pixels(13)),
                     top: .perMonitor(
                         [
-                            PerMonitorValue(description: .pattern("built-in")!, value: 3),
-                            PerMonitorValue(description: .secondary, value: 4),
+                            PerMonitorValue(description: .pattern("built-in")!, value: .pixels(3)),
+                            PerMonitorValue(description: .secondary, value: .pixels(4)),
                         ],
-                        default: 6,
+                        default: .pixels(6),
                     ),
-                    right: .perMonitor([PerMonitorValue(description: .sequenceNumber(2), value: 7)], default: 8),
+                    right: .perMonitor([PerMonitorValue(description: .sequenceNumber(2), value: .pixels(7))], default: .pixels(8)),
                 ),
             ),
         )
@@ -524,10 +524,39 @@ final class ConfigTest: XCTestCase {
             """,
         )
         assertEquals(result2.strErrors, [
-            "[ERROR] gaps.inner.horizontal: The last item in the array must be of type Int",
+            "[ERROR] gaps.inner.horizontal[0]: Expected types are \'int\' or \'string\'. But actual type is \'bool\'",
             "[ERROR] gaps.inner.vertical[0]: The table is expected to have a single key \'monitor\'",
             "[ERROR] gaps.inner.vertical[1].monitor: The table is expected to have a single key",
         ])
+    }
+
+    func testParseGapsInPercent() {
+        let result = parseConfig(
+            """
+            [gaps]
+                inner.horizontal = '2%'
+                outer.top = [{ monitor.main = '1%' }, 5]
+            """,
+        )
+        assertEquals(result.errors, [])
+        assertEquals(result.config.gaps.inner.horizontal, .constant(.percent(2)))
+        assertEquals(
+            result.config.gaps.outer.top,
+            .perMonitor([PerMonitorValue(description: .main, value: .percent(1))], default: .pixels(5)),
+        )
+
+        let bad = parseConfig(
+            """
+            [gaps]
+                outer.left = '5px'
+                outer.right = ['5%']
+            """,
+        )
+        assertEquals(bad.strErrors, [
+            "[ERROR] gaps.outer.left: Can\'t parse \'5px\'. Expected an integer number of pixels (e.g. 30) or a percentage (e.g. \'5%\')",
+            "[ERROR] gaps.outer.right: The array must contain at least one monitor pattern",
+        ])
+        assertEquals(bad.config.gaps.outer.left, .constant(.pixels(0)))
     }
 
     func testAfterLoginCommandDeprecation() {
@@ -651,13 +680,13 @@ final class ConfigTest: XCTestCase {
         )
         assertEquals(
             bad.strErrors,
-            ["[ERROR] accordion-padding: Can\'t parse accordion padding \'5px\'. Expected an integer number of pixels (e.g. 30) or a percentage (e.g. \'5%\')"],
+            ["[ERROR] accordion-padding: Can\'t parse \'5px\'. Expected an integer number of pixels (e.g. 30) or a percentage (e.g. \'5%\')"],
         )
         assertEquals(bad.config.accordionPadding, .pixels(30))
 
         assertEquals(
             parseConfig("accordion-padding = '-5%'").strErrors,
-            ["[ERROR] accordion-padding: Can\'t parse accordion padding \'-5%\'. Expected an integer number of pixels (e.g. 30) or a percentage (e.g. \'5%\')"],
+            ["[ERROR] accordion-padding: Can\'t parse \'-5%\'. Expected an integer number of pixels (e.g. 30) or a percentage (e.g. \'5%\')"],
         )
 
         assertEquals(

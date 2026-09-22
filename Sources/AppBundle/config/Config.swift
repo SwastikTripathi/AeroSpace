@@ -44,7 +44,7 @@ struct Config: ConvenienceMutable {
     var startAtLogin: Bool = false
     var autoReloadConfig: Bool = false
     var automaticallyUnhideMacosHiddenApps: Bool = false
-    var accordionPadding: AccordionPadding = .pixels(30)
+    var accordionPadding: PixelsOrPercent = .pixels(30)
     var enableNormalizationOppositeOrientationForNestedContainers: Bool = true
     var persistentWorkspaces: OrderedSet<String> = []
     var execOnWorkspaceChange: [String] = [] // todo deprecate
@@ -80,17 +80,4 @@ enum ConfigVersion: Int, Comparable, CaseIterable, Sendable, CustomStringConvert
 
 enum DefaultContainerOrientation: String {
     case horizontal, vertical, auto
-}
-
-enum AccordionPadding: Equatable {
-    case pixels(Int)
-    /// Percentage of the monitor width (horizontal accordion) or height (vertical accordion)
-    case percent(Int)
-
-    func toPixels(_ orientation: Orientation, _ monitor: any MonitorInfo) -> CGFloat {
-        switch self {
-            case .pixels(let pixels): CGFloat(pixels)
-            case .percent(let percent): monitor.visibleRect.getDimension(orientation) * CGFloat(percent) / 100
-        }
-    }
 }

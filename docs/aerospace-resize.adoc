@@ -9,7 +9,7 @@ include::util/man-attributes.adoc[]
 == Synopsis
 [verse]
 // tag::synopsis[]
-aerospace resize [-h|--help] [--window-id <window-id>] (smart|smart-opposite|width|height) [+|-]<number>
+aerospace resize [-h|--help] [--window-id <window-id>] (smart|smart-opposite|width|height) [+|-]<number>[%]
 
 // end::synopsis[]
 
@@ -32,6 +32,12 @@ Second argument controls how much the size changes
 * If the `<number>` is prefixed with `+` then the dimension is increased
 * If the `<number>` is prefixed with `-` then the dimension is decreased
 * If the `<number>` is prefixed with neither `+` nor `-` then the command changes the absolute value of the dimension
+
+The `<number>` is a number of pixels, unless it's suffixed with `%`.
+The percentage is relative to the size of the monitor that the window resides on (not counting the menu bar, the Dock and the outer gaps)
+
+* `aerospace resize width 50%` makes the window occupy half of the monitor width
+* `aerospace resize width +10%` increases the window width by 10% of the monitor width
 
 // =========================================================== Options
 include::./util/conditional-options-header.adoc[]

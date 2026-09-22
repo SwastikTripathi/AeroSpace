@@ -145,7 +145,7 @@ private let configParser: [String: any ParserProtocol<Config>] = [
     "start-at-login": Parser(\.startAtLogin, parseBool),
     "auto-reload-config": Parser(\.autoReloadConfig, parseBool),
     "automatically-unhide-macos-hidden-apps": Parser(\.automaticallyUnhideMacosHiddenApps, parseBool),
-    "accordion-padding": Parser(\.accordionPadding, parseAccordionPadding),
+    "accordion-padding": Parser(\.accordionPadding, parsePixelsOrPercent),
     persistentWorkspacesKey: Parser(\.persistentWorkspaces, parsePersistentWorkspaces),
     "exec-on-workspace-change": Parser(\.execOnWorkspaceChange, parseArrayOfStrings),
     "exec": Parser(\.execConfig, parseExecConfig),
@@ -333,10 +333,6 @@ func parseString(_ raw: OrderedJson, _ backtrace: ConfigBacktrace) -> ResOrConfi
     raw.asStringOrNil.toResult(expectedActualTypeDiagnostic(expected: .string, actual: raw.tomlType, backtrace))
 }
 
-func parseSimpleType<T>(_ raw: OrderedJson, ofType: T.Type) -> T? {
-    (raw.asIntOrNil as? T) ?? (raw.asStringOrNil as? T) ?? (raw.asBoolOrNil as? T)
-}
-
 extension OrderedJson {
     func unwrapTableWithSingleKey(expectedKey: String? = nil, _ backtrace: inout ConfigBacktrace) -> ResOrConfigParseDiagnostic<(key: String, value: OrderedJson)> {
         guard let asDictOrNil else {
@@ -411,18 +407,15 @@ private func parseArrayOfStrings(_ raw: OrderedJson, _ backtrace: ConfigBacktrac
         }
 }
 
-private func parseAccordionPadding(_ raw: OrderedJson, _ backtrace: ConfigBacktrace) -> ResOrConfigParseDiagnostic<AccordionPadding> {
+func parsePixelsOrPercent(_ raw: OrderedJson, _ backtrace: ConfigBacktrace) -> ResOrConfigParseDiagnostic<PixelsOrPercent> {
     if let pixels = raw.asIntOrNil {
         return .success(.pixels(pixels))
     }
     guard let rawString = raw.asStringOrNil else {
         return .failure(expectedActualTypeDiagnostic(expected: [.int, .string], actual: raw.tomlType, backtrace))
     }
-    let digits = rawString.dropLast()
-    guard rawString.hasSuffix("%"), !digits.isEmpty, digits.allSatisfy({ $0.isASCII && $0.isNumber }), let percent = Int(digits) else {
-        return .failure(.init(backtrace, "Can't parse accordion padding '\(rawString)'. Expected an integer number of pixels (e.g. 30) or a percentage (e.g. '5%')"))
-    }
-    return .success(.percent(percent))
+    return PixelsOrPercent.parse(rawString)
+        .toResult(.init(backtrace, "Can't parse '\(rawString)'. Expected an integer number of pixels (e.g. 30) or a percentage (e.g. '5%')"))
 }
 
 private func parseDefaultContainerOrientation(_ raw: OrderedJson, _ backtrace: ConfigBacktrace) -> ResOrConfigParseDiagnostic<DefaultContainerOrientation> {

@@ -38,10 +38,12 @@ struct ResizeCommand: Command {
         }
         guard let orientation else { return .fail }
         guard let node else { return .fail }
+        // Weights are measured in the units of the workspace size. That's why percentages are resolved against it
+        let hundredPercent = target.workspace.getWeight(orientation)
         let diff: CGFloat = switch args.units.val {
-            case .set(let unit): CGFloat(unit) - node.getWeight(orientation)
-            case .add(let unit): CGFloat(unit)
-            case .subtract(let unit): -CGFloat(unit)
+            case .set(let unit): unit.toPixels(hundredPercent: hundredPercent) - node.getWeight(orientation)
+            case .add(let unit): unit.toPixels(hundredPercent: hundredPercent)
+            case .subtract(let unit): -unit.toPixels(hundredPercent: hundredPercent)
         }
 
         guard let childDiff = diff.div(parent.children.count - 1) else { return .fail }
