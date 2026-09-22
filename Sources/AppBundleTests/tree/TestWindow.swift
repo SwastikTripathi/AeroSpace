@@ -3,29 +3,53 @@ import AppKit
 
 final class TestWindow: Window, CustomStringConvertible {
     private var _rect: Rect?
+    private var rectBeforeHidingInCorner: Rect? = nil
     var isMacosFullscreenForTest = false
 
     @MainActor
-    private init(_ id: UInt32, _ parent: NonLeafTreeNodeObject, _ adaptiveWeight: CGFloat, _ rect: Rect?) {
+    private init(_ id: UInt32, _ app: TestApp, _ parent: NonLeafTreeNodeObject, _ adaptiveWeight: CGFloat, _ rect: Rect?) {
         _rect = rect
-        super.init(id: id, TestApp.shared, lastFloatingSize: nil, parent: parent, adaptiveWeight: adaptiveWeight, index: INDEX_BIND_LAST)
+        super.init(id: id, app, lastFloatingSize: nil, parent: parent, adaptiveWeight: adaptiveWeight, index: INDEX_BIND_LAST)
     }
 
     @discardableResult
     @MainActor
-    static func new(id: UInt32, parent: NonLeafTreeNodeObject, adaptiveWeight: CGFloat = 1, rect: Rect? = nil) -> TestWindow {
-        let wi = TestWindow(id, parent, adaptiveWeight, rect)
-        TestApp.shared._windows.append(wi)
+    static func new(id: UInt32, parent: NonLeafTreeNodeObject, adaptiveWeight: CGFloat = 1, rect: Rect? = nil, app: TestApp? = nil) -> TestWindow {
+        let app = app ?? TestApp.shared
+        let wi = TestWindow(id, app, parent, adaptiveWeight, rect)
+        app._windows.append(wi)
         return wi
     }
 
     nonisolated var description: String { "TestWindow(\(windowId))" }
 
+    private var testApp: TestApp { app as! TestApp }
+
     @MainActor
     override func nativeFocus() {
-        appForTests = TestApp.shared
-        TestApp.shared.focusedWindow = self
+        appForTests = testApp
+        testApp.focusedWindow = self
     }
+
+    /// Simulates `MacWindow.hideInCorner`: the window is moved to the bottom right corner of the monitor, the size is preserved
+    @MainActor
+    func hideInCornerForTest() {
+        guard let rect = _rect, !isHiddenInCorner, let monitorRect = nodeMonitor?.visibleRect else { return }
+        rectBeforeHidingInCorner = rect
+        _rect = Rect(topLeftX: monitorRect.maxX - 1, topLeftY: monitorRect.maxY - 1, width: rect.width, height: rect.height)
+    }
+
+    /// Simulates `MacWindow.unhideFromCorner` followed by the layout
+    @MainActor
+    func unhideFromCornerForTest() {
+        guard let rectBeforeHidingInCorner else { return }
+        _rect = rectBeforeHidingInCorner
+        self.rectBeforeHidingInCorner = nil
+    }
+
+    override var isHiddenInCorner: Bool { rectBeforeHidingInCorner != nil }
+
+    @MainActor override func getFloatingRectAfterUnhidingFromCorner() -> Rect? { rectBeforeHidingInCorner }
 
     override func closeAxWindow() {
         unbindFromParent()

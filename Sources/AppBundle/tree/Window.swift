@@ -35,6 +35,8 @@ open class Window: TreeNode, Hashable {
     func isMacosFullscreen(_ cm: CancellationMode) async throws -> Bool { false }
     func isMacosMinimized(_ cm: CancellationMode) async throws -> Bool { false } // todo replace with enum MacOsWindowNativeState { normal, fullscreen, invisible }
     var isHiddenInCorner: Bool { die("Not implemented") }
+    /// Where the floating window is going to be moved once it's unhidden from the corner. nil if the window isn't hidden in the corner
+    @MainActor func getFloatingRectAfterUnhidingFromCorner() -> Rect? { die("Not implemented") }
     @MainActor func nativeFocus() { die("Not implemented") }
     func getAxRect(_ cm: CancellationMode) async throws -> Rect? { die("Not implemented") }
     func getCenter(_ cm: CancellationMode) async throws -> CGPoint? { try await getAxRect(cm)?.center }
@@ -68,4 +70,18 @@ extension Window {
     }
 
     func asMacWindow() -> MacWindow { self as! MacWindow }
+
+    /// Windows of invisible workspaces are hidden in the corner of the monitor, so their AX position means nothing.
+    /// This function returns the center of the window as if its workspace was visible
+    @MainActor
+    func getCenterAsIfUnhiddenFromCorner(_ cm: CancellationMode) async throws -> CGPoint? {
+        if !isHiddenInCorner { return try await getCenter(cm) }
+        return switch windowParentCases {
+            case .floatingWindowsContainer: getFloatingRectAfterUnhidingFromCorner()?.center
+            // Tiling windows are unhidden by the layout. Unless the tree changes, the layout puts them where they were before hiding
+            case .tilingContainer: (lastAppliedLayoutPhysicalRect ?? lastAppliedLayoutVirtualRect)?.center
+            case .macosFullscreenWindowsContainer, .macosHiddenAppsWindowsContainer, .macosMinimizedWindowsContainer,
+                 .macosPopupWindowsContainer, .unbound: nil
+        }
+    }
 }

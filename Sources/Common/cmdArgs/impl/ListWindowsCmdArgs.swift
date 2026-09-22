@@ -2,6 +2,7 @@ import OrderedCollections
 
 private let workspace = "<workspace>"
 private let workspaces = "\(workspace)..."
+private let sortKeys = "<sort-key>..."
 
 public struct ListWindowsCmdArgs: CmdArgs {
     /*conforms*/ public var commonState: CmdArgsCommonState
@@ -18,6 +19,9 @@ public struct ListWindowsCmdArgs: CmdArgs {
             "--pid": singleValueSubArgParser(\.filteringOptions.pidFilter, "<pid>") { Int32($0).toResult("Can't convert to Int32") },
             "--app-bundle-id": singleValueSubArgParser(\.filteringOptions.appIdFilter, "<app-bundle-id>", Result.success),
 
+            // Sorting flags
+            "--sort-by": ArgParser(\.sortBy, parseSortKeys),
+
             // Formatting flags
             "--format": formatParser(\._format, for: .window),
             "--count": trueBoolFlag(\.outputOnlyCount),
@@ -29,6 +33,7 @@ public struct ListWindowsCmdArgs: CmdArgs {
             ["--all", "--focused", "--monitor"],
             ["--count", "--format"],
             ["--count", "--json"],
+            ["--count", "--sort-by"],
         ],
     )
 
@@ -38,6 +43,7 @@ public struct ListWindowsCmdArgs: CmdArgs {
     public var _format: [InterToken<InterVar>] = []
     public var outputOnlyCount: Bool = false
     public var json: Bool = false
+    public var sortBy: [WindowSortKey] = []
 
     public struct FilteringOptions: ConvenienceMutable, Equatable, Sendable {
         public var monitors: [MonitorId] = []
@@ -122,6 +128,22 @@ public enum WorkspaceFilter: Equatable, Sendable {
     case focused
     case visible
     case name(WorkspaceName)
+}
+
+private func parseSortKeys(input: SubArgParserInput) -> ParsedCliArgs<[WindowSortKey]> {
+    let args = input.nonFlagArgs()
+    if args.isEmpty {
+        return .fail("\(sortKeys) is mandatory. Possible values: \(WindowSortKey.unionLiteral)", advanceBy: args.count)
+    }
+    return .init(args.mapAllOrFailure { parseEnum($0, WindowSortKey.self) }, advanceBy: args.count)
+}
+
+public enum WindowSortKey: String, CaseIterable, Equatable, Sendable {
+    case dfs
+    case pid
+    case windowId = "window-id"
+    case windowTitle = "window-title"
+    case appName = "app-name"
 }
 
 public enum FormatVar: RawRepresentable, Equatable, CaseIterable, Sendable {

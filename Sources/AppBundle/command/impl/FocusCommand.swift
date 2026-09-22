@@ -129,48 +129,80 @@ struct FocusCommand: Command {
     }
     var _floatingWindows: [FloatingWindowData] = []
     for window in workspace.floatingWindows {
-        // todo bug: we shouldn't access ax api here. What if the window was moved but it wasn't committed to ax yet?
-        guard let center = try? await window.getCenter(.nonCancellable) else { continue }
-
-        let tilingParent: TilingContainer
-        let index: Int
-        if let target = center.coerce(in: workspace.workspaceMonitor.visibleRectPaddedByOuterGaps)?
-            .findWindowRecursively(in: workspace.rootTilingContainer, virtual: true, fullscreenCoversAll: false)
-        {
-            guard let targetCenter = try? await target.getCenter(.nonCancellable) else { continue }
-            guard let _tilingParent = target.parent as? TilingContainer else { continue }
-            tilingParent = _tilingParent
-            index = switch tilingParent.layout {
-                case .tiles:
-                    center.getProjection(tilingParent.orientation) >= targetCenter.getProjection(tilingParent.orientation)
-                        ? target.ownIndex.orDie() + 1
-                        : target.ownIndex.orDie()
-                case .accordion:
-                    center.getProjection(tilingParent.orientation) >= targetCenter.getProjection(tilingParent.orientation)
-                        ? tilingParent.children.count
-                        : 0
-            }
-        } else {
-            index = 0
-            tilingParent = workspace.rootTilingContainer
-        }
+        guard let position = await getPositionInTilingTree(floatingWindow: window, workspace: workspace) else { continue }
 
         let data = window.unbindFromParent()
-        let floatingWindowData = FloatingWindowData(
-            window: window,
-            center: center,
-            tilingParent: tilingParent,
-            adaptiveWeight: data.adaptiveWeight,
-            index: index,
-        )
-        _floatingWindows.append(floatingWindowData)
+        _floatingWindows.append(FloatingWindowData(window: window, position: position, adaptiveWeight: data.adaptiveWeight))
     }
-    let floatingWindows: [FloatingWindowData] = _floatingWindows.sortedBy { $0.center.getProjection($0.tilingParent.orientation) }.reversed()
+    let floatingWindows = floatingWindowsInsertionOrder(_floatingWindows) { $0.position }
 
     for floating in floatingWindows { // Make floating windows be seen as tiling
-        floating.window.bind(to: floating.tilingParent, adaptiveWeight: 1, index: floating.index)
+        floating.window.bind(to: floating.position.tilingParent, adaptiveWeight: 1, index: floating.position.index)
     }
     return floatingWindows
+}
+
+/// The same as `rootTilingContainer.allLeafWindowsRecursive` after `makeFloatingWindowsSeenAsTiling`, but without mutating the tree
+@MainActor func getDfsWindowsWithFloatingSeenAsTiling(workspace: Workspace) async -> [Window] {
+    var floatingWindows: [(window: Window, position: PositionInTilingTree)] = []
+    for window in workspace.floatingWindows {
+        guard let position = await getPositionInTilingTree(floatingWindow: window, workspace: workspace) else { continue }
+        floatingWindows.append((window, position))
+    }
+    var virtualChildren: [ObjectIdentifier: [TreeNode]] = [:]
+    for (window, position) in floatingWindowsInsertionOrder(floatingWindows, { $0.position }) {
+        // The tree could have changed while we were awaiting AX
+        guard window.parent === workspace.floatingWindowsContainer else { continue }
+        var children = virtualChildren[ObjectIdentifier(position.tilingParent)] ?? position.tilingParent.children
+        children.insert(window, at: min(position.index, children.count))
+        virtualChildren[ObjectIdentifier(position.tilingParent)] = children
+    }
+    var result: [Window] = []
+    func visit(_ node: TreeNode) {
+        if let window = node as? Window {
+            result.append(window)
+        }
+        for child in virtualChildren[ObjectIdentifier(node)] ?? node.children {
+            visit(child)
+        }
+    }
+    visit(workspace.rootTilingContainer)
+    return result
+}
+
+/// The order in which floating windows are inserted into the tiling tree
+@MainActor private func floatingWindowsInsertionOrder<T>(_ floatingWindows: [T], _ position: (T) -> PositionInTilingTree) -> [T] {
+    floatingWindows.sortedBy { position($0).center.getProjection(position($0).tilingParent.orientation) }.reversed()
+}
+
+/// The floating window parent container is determined as the smallest tiling container that contains the center of the floating window
+@MainActor private func getPositionInTilingTree(floatingWindow window: Window, workspace: Workspace) async -> PositionInTilingTree? {
+    // todo bug: we shouldn't access ax api here. What if the window was moved but it wasn't committed to ax yet?
+    guard let center = try? await window.getCenterAsIfUnhiddenFromCorner(.nonCancellable) else { return nil }
+
+    let tilingParent: TilingContainer
+    let index: Int
+    if let target = center.coerce(in: workspace.workspaceMonitor.visibleRectPaddedByOuterGaps)?
+        .findWindowRecursively(in: workspace.rootTilingContainer, virtual: true, fullscreenCoversAll: false)
+    {
+        guard let targetCenter = try? await target.getCenterAsIfUnhiddenFromCorner(.nonCancellable) else { return nil }
+        guard let _tilingParent = target.parent as? TilingContainer else { return nil }
+        tilingParent = _tilingParent
+        index = switch tilingParent.layout {
+            case .tiles:
+                center.getProjection(tilingParent.orientation) >= targetCenter.getProjection(tilingParent.orientation)
+                    ? target.ownIndex.orDie() + 1
+                    : target.ownIndex.orDie()
+            case .accordion:
+                center.getProjection(tilingParent.orientation) >= targetCenter.getProjection(tilingParent.orientation)
+                    ? tilingParent.children.count
+                    : 0
+        }
+    } else {
+        index = 0
+        tilingParent = workspace.rootTilingContainer
+    }
+    return PositionInTilingTree(center: center, tilingParent: tilingParent, index: index)
 }
 
 @MainActor private func restoreFloatingWindows(floatingWindows: [FloatingWindowData], workspace: Workspace) {
@@ -183,13 +215,16 @@ struct FocusCommand: Command {
     }
 }
 
+private struct PositionInTilingTree {
+    let center: CGPoint
+    let tilingParent: TilingContainer
+    let index: Int
+}
+
 private struct FloatingWindowData {
     let window: Window
-    let center: CGPoint
-
-    let tilingParent: TilingContainer
+    let position: PositionInTilingTree
     let adaptiveWeight: CGFloat
-    let index: Int
 }
 
 extension TreeNode {

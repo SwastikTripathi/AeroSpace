@@ -11,6 +11,7 @@ open class TreeNode: Equatable, AeroAny {
     // Usages:
     // - resize with mouse
     // - makeFloatingWindowsSeenAsTiling in focus command
+    // - list-windows --sort-by dfs
     var lastAppliedLayoutVirtualRect: Rect? = nil  // as if inner gaps were always zero
     // Usages:
     // - resize with mouse

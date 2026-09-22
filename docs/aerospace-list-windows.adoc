@@ -12,9 +12,9 @@ include::util/man-attributes.adoc[]
 aerospace list-windows [-h|--help] (--workspace <workspace>...|--monitor <monitor>...)
                        [--monitor <monitor>...] [--workspace <workspace>...]
                        [--pid <pid>] [--app-bundle-id <app-bundle-id>] [--format <output-format>]
-                       [--count] [--json]
-aerospace list-windows [-h|--help] --all [--format <output-format>] [--count] [--json]
-aerospace list-windows [-h|--help] --focused [--format <output-format>] [--count] [--json]
+                       [--count] [--json] [--sort-by <sort-key>...]
+aerospace list-windows [-h|--help] --all [--format <output-format>] [--count] [--json] [--sort-by <sort-key>...]
+aerospace list-windows [-h|--help] --focused [--format <output-format>] [--count] [--json] [--sort-by <sort-key>...]
 
 // end::synopsis[]
 
@@ -59,11 +59,32 @@ Deprecated (but still supported) flag name: `--app-id`
 Incompatible with `--count`
 
 --count:: Output only the number of windows.
-Incompatible with `--format`
+Incompatible with `--format` and `--sort-by`
 
 --json:: Output in JSON format.
 Can be used in combination with `--format` to specify which data to include into the json.
 Incompatible with `--count`
+
+--sort-by <sort-key>...::
+Sort windows by the specified keys.
+`<sort-key>...` is a space-separated list of sort keys.
+Windows that are equal by the first key are sorted by the second key, and so on.
+Windows that are equal by all the keys are sorted by window ID.
+If not specified, windows are sorted by application name, then by window title (only if `<output-format>` contains `%{window-title}`), then by window ID.
+Incompatible with `--count`
++
+Possible values: +
++
+. `dfs` sorts windows in the depth-first order (top-to-bottom and left-to-right) of xref:guide.adoc#tree[the tree].
+Monitors and workspaces are considered to be part of the tree:
+windows are sorted by monitor (in `%{monitor-id}` order), then by workspace (in the same order as `list-workspaces` prints them), and then by their position in the workspace tree.
+Similar to xref:./commands.adoc#focus[focus] command, floating windows are perceived as part of the tree,
+so windows of a workspace are listed in the same order as `focus --dfs-index` indexes them when the workspace is focused.
+Windows that are not part of the tree (for example, macOS native fullscreen windows) go after all other windows of their workspace.
+. `pid` sorts windows by the https://en.wikipedia.org/wiki/Process_identifier[UNIX process identifier] of their applications
+. `window-id` sorts windows by window ID
+. `window-title` sorts windows by window title
+. `app-name` sorts windows by application name
 
 // =========================================================== Output Format
 include::util/conditional-output-format-header.adoc[]

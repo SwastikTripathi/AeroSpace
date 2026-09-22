@@ -16,6 +16,14 @@ final class TestApp: AbstractApp {
         self.name = rawAppBundleId
     }
 
+    /// An app other than ``shared``. `pid` must be unique among the apps of the test
+    init(pid: Int32, name: String) {
+        check(pid != 0, "pid 0 is reserved for TestApp.shared")
+        self.pid = pid
+        self.rawAppBundleId = "bobko.AeroSpace.test-app.\(name)"
+        self.name = name
+    }
+
     var _windows: [Window] = []
     var windows: [Window] {
         get { _windows }
