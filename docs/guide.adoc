@@ -56,6 +56,62 @@ xattr -d com.apple.quarantine /Applications/AeroSpace.app
 . Right mouse click
 . Open (yes, it's that stupid)
 
+[#installation-from-sources]
+=== Installation from sources
+
+If you want to try the latest unreleased changes, or if you want to install AeroSpace with your own patches,
+you can build AeroSpace from sources and install it as `aerospace-dev` Homebrew cask.
+
+. Install the dependencies and create the codesign certificate as described in steps 1 and 2 of
+https://github.com/nikitabobko/AeroSpace/blob/main/dev-docs/development.md[dev-docs/development.md].
+The release build always includes shell completion and man pages, so their dependencies are mandatory.
+See https://github.com/nikitabobko/AeroSpace#macos-compatibility[macOS compatibility] for the required macOS, Swift and Xcode versions.
+. Clone the repository and run `install-from-sources.sh`
++
+[source,bash]
+----
+git clone https://github.com/nikitabobko/AeroSpace.git
+cd AeroSpace
+./install-from-sources.sh
+----
+
+`install-from-sources.sh` does the following:
+
+. Builds the release build to `.release` dir by running `build-release.sh`.
+Pass `--dont-rebuild` flag to skip this step and install the existing `.release` build.
+. Uninstalls `aerospace` Homebrew cask, if it's installed (`aerospace` and `aerospace-dev` casks conflict with each other)
+. Installs https://github.com/nikitabobko/brew-install-path[brew-install-path], if it's not installed
+. Installs the build as `aerospace-dev` Homebrew cask (`AeroSpace.app`, `aerospace` CLI, man pages and shell completion)
+
+To update, pull the latest changes and run the script again:
+
+[source,bash]
+----
+git pull
+./install-from-sources.sh
+----
+
+The script refuses to build if the git working directory has uncommitted changes.
+If you want to install AeroSpace with your own patches, commit them first.
+
+If Homebrew refuses to load casks from untrusted `nikitabobko/tap` tap, https://docs.brew.sh/Tap-Trust[trust] the tap and run the script again:
+
+[source,bash]
+----
+brew trust nikitabobko/tap
+----
+
+To switch back to the released version:
+
+[source,bash]
+----
+brew uninstall --cask aerospace-dev
+brew install --cask nikitabobko/tap/aerospace
+----
+
+Keep in mind that unreleased changes might contain breaking changes, and they might not be reflected in this guide yet.
+The docs for the latest changes can be found in the https://github.com/nikitabobko/AeroSpace/tree/main/docs[docs directory].
+
 [#configuring-aerospace]
 == Configuring AeroSpace
 
