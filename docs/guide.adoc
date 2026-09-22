@@ -489,6 +489,8 @@ In `config-version = 1`, the list of persistent workspaces is inferred from your
 `alt-1 = 'workspace 1'` makes the `1` workspace persistent, but `alt-1 = 'exec-and-forget aerospace workspace 1'` doesn't
 * Workspace names in <<assign-workspaces-to-monitors,`workspace-to-monitor-force-assignment`>>
 
+The workspaces that `persistent-workspaces` doesn't keep alive are called <<phantom-workspaces,phantom workspaces>>.
+
 The difference between alive and destroyed workspaces is that alive workspaces preserve their state:
 
 * *Monitor assignment.*
@@ -506,6 +508,7 @@ When a monitor needs a new workspace to show
 (e.g. you connect a new monitor, or you move the visible workspace of the monitor to another monitor),
 AeroSpace shows one of the invisible workspaces that are assigned to the monitor.
 If there is no such workspace, AeroSpace creates a new empty workspace named after the smallest number that isn't taken by other workspaces (`1`, `2`, `3`, ...).
+The created workspace is always <<phantom-workspaces,phantom>>.
 
 [NOTE]
 ====
@@ -513,6 +516,51 @@ In i3, workspaces are alive only when they are either non-empty, or visible.
 AeroSpace makes it possible to keep empty workspaces alive with `persistent-workspaces`.
 That way, you can reliably move an empty workspace to another monitor and be sure that it stays there.
 ====
+
+[#phantom-workspaces]
+=== Phantom workspaces
+
+Workspaces that aren't listed in the `persistent-workspaces` config option are called *phantom* workspaces.
+A phantom workspace exists only as long as you use it.
+It's destroyed once it contains no windows and it's neither visible nor focused.
+
+If you keep a list of `persistent-workspaces`, the most common way to run into a phantom workspace is to connect a new monitor.
+If you have no workspace assigned to the newly connected monitor, AeroSpace creates a phantom workspace for the monitor (see <<workspace-lifecycle>>).
+Such a workspace is easy to recognize: it has a numeric name that you have never configured, e.g. `10`.
+
+AeroSpace doesn't move one of your existing workspaces to the new monitor on purpose.
+Which particular workspace should be moved? There is no good answer to this question.
+The workspace to monitor assignment is supposed to be explicit and predictable:
+if you didn't move the workspace to another monitor yourself then it shouldn't move.
+
+If you don't want to see a phantom workspace on the new monitor,
+move one of your own workspaces to the monitor with xref:commands.adoc#move-workspace-to-monitor[move-workspace-to-monitor],
+or <<assign-workspaces-to-monitors,assign a workspace to the monitor>> upfront.
+The phantom workspace then disappears by itself.
+
+In <<config-version-2,`config-version = 2`>>, the workspace that you assign must also be listed in `persistent-workspaces`.
+Otherwise, it's destroyed while it's empty, so it doesn't exist by the time you connect the monitor,
+and AeroSpace creates a phantom workspace for the monitor anyway.
+(In `config-version = 1`, `workspace-to-monitor-force-assignment` makes the workspace persistent automatically)
+
+[#make-all-workspaces-phantom]
+==== Make all workspaces phantom
+
+If you prefer workspaces to be fully dynamic (as they are in i3), assign an empty array to `persistent-workspaces`:
+
+[source,toml]
+----
+config-version = 2
+persistent-workspaces = []
+----
+
+Now workspaces are created when you switch to them, and they are destroyed as soon as you leave them empty.
+The menu of the AeroSpace tray icon, xref:commands.adoc#list-workspaces[list-workspaces] and
+xref:commands.adoc#workspace[`workspace (next|prev)`] only see the workspaces that are visible or contain windows.
+
+Keep in mind that a destroyed workspace doesn't preserve its monitor assignment and the layout of its <<tree,root container>>.
+
+xref:./goodies.adoc#i3-like-config[i3 like config] is a complete config sample that makes all workspaces phantom.
 
 === Proper monitor arrangement
 
@@ -790,6 +838,8 @@ When you switch to a workspace:
 . AeroSpace focuses the workspace
 
 You can move workspace to a different monitor with xref:commands.adoc#move-workspace-to-monitor[move-workspace-to-monitor] command.
+
+If a workspace that you have never configured shows up on a newly connected monitor, see <<phantom-workspaces>>.
 
 The idea of making pool of workspaces shared is based on [#observation]*the observation* that most users have a limited set of workspaces on their secondary monitors.
 Secondary monitors are frequently dedicated to specific tasks (browser, shell), or for monitoring various activities such as logs and dashboards.
