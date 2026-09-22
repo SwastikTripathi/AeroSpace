@@ -4,6 +4,7 @@ import AppKit
 final class TestWindow: Window, CustomStringConvertible {
     private var _rect: Rect?
     var isMacosFullscreenForTest = false
+    private var nextGetAxRectSuspension: (suspended: AwaitableOneTimeBroadcastLatch, resume: AwaitableOneTimeBroadcastLatch)? = nil
 
     @MainActor
     private init(_ id: UInt32, _ parent: NonLeafTreeNodeObject, _ adaptiveWeight: CGFloat, _ rect: Rect?) {
@@ -34,7 +35,22 @@ final class TestWindow: Window, CustomStringConvertible {
     override func getTitle(_ cm: CancellationMode) async throws -> String { description }
 
     @MainActor override func getAxRect(_ cm: CancellationMode) async throws -> Rect? { // todo change to not Optional
-        _rect
+        if let suspension = nextGetAxRectSuspension {
+            nextGetAxRectSuspension = nil
+            await suspension.suspended.signalToAll()
+            try await suspension.resume.await()
+        }
+        return _rect
+    }
+
+    /// Real AX requests are suspension points (they are executed on the app AX thread). TestWindow AX requests return
+    /// immediately, unless this function is used to suspend the next getAxRect call. `suspended` is signaled when the call
+    /// is reached. The call returns only after `resume` is signaled
+    @MainActor
+    func suspendNextGetAxRect() -> (suspended: AwaitableOneTimeBroadcastLatch, resume: AwaitableOneTimeBroadcastLatch) {
+        let suspension = (suspended: AwaitableOneTimeBroadcastLatch(), resume: AwaitableOneTimeBroadcastLatch())
+        nextGetAxRectSuspension = suspension
+        return suspension
     }
 
     @MainActor override func getAxSize(_ cm: CancellationMode) async throws -> CGSize? {

@@ -15,7 +15,13 @@ struct FocusCommand: Command {
             return .fail
         }
         // todo bug: floating windows break mru
-        let floatingWindows = args.floatingAsTiling ? await makeFloatingWindowsSeenAsTiling(workspace: target.workspace) : []
+        let floatingWindowCenters = args.floatingAsTiling ? await getFloatingWindowCenters(workspace: target.workspace) : []
+        // Don't allow suspension points until the floating windows are restored. Otherwise, other sessions (e.g. another
+        // focus command, or MacWindow.garbageCollect) could observe and modify floating windows in the intermediate state
+        // https://github.com/nikitabobko/AeroSpace/issues/1311
+        let floatingWindows = args.floatingAsTiling
+            ? makeFloatingWindowsSeenAsTiling(workspace: target.workspace, floatingWindowCenters)
+            : []
         defer {
             if args.floatingAsTiling {
                 restoreFloatingWindows(floatingWindows: floatingWindows, workspace: target.workspace)
@@ -122,23 +128,41 @@ struct FocusCommand: Command {
     return .from(bool: windowToFocus.focusWindow())
 }
 
-@MainActor private func makeFloatingWindowsSeenAsTiling(workspace: Workspace) async -> [FloatingWindowData] {
+@MainActor private func getFloatingWindowCenters(workspace: Workspace) async -> [FloatingWindowCenter] {
+    var result: [FloatingWindowCenter] = []
+    for window in workspace.floatingWindows {
+        // todo bug: we shouldn't access ax api here. What if the window was moved but it wasn't committed to ax yet?
+        guard let center = try? await window.getCenter(.nonCancellable) else { continue }
+        let target = center.coerce(in: workspace.workspaceMonitor.visibleRectPaddedByOuterGaps)?
+            .findWindowRecursively(in: workspace.rootTilingContainer, virtual: true, fullscreenCoversAll: false)
+        if let target {
+            guard let targetCenter = try? await target.getCenter(.nonCancellable) else { continue }
+            result.append(FloatingWindowCenter(window: window, center: center, target: (target, targetCenter)))
+        } else {
+            result.append(FloatingWindowCenter(window: window, center: center, target: nil))
+        }
+    }
+    return result
+}
+
+// The function is synchronous on purpose. See the comment at the call site
+@MainActor private func makeFloatingWindowsSeenAsTiling(workspace: Workspace, _ centers: [FloatingWindowCenter]) -> [FloatingWindowData] {
     let mruBefore = workspace.mostRecentWindowRecursive
     defer {
         mruBefore?.markAsMostRecentChild()
     }
     var _floatingWindows: [FloatingWindowData] = []
-    for window in workspace.floatingWindows {
-        // todo bug: we shouldn't access ax api here. What if the window was moved but it wasn't committed to ax yet?
-        guard let center = try? await window.getCenter(.nonCancellable) else { continue }
+    for floating in centers {
+        let window = floating.window
+        let center = floating.center
+        // The tree could have been modified by other sessions during suspension points of getFloatingWindowCenters
+        guard window.parent === workspace.floatingWindowsContainer else { continue }
 
         let tilingParent: TilingContainer
         let index: Int
-        if let target = center.coerce(in: workspace.workspaceMonitor.visibleRectPaddedByOuterGaps)?
-            .findWindowRecursively(in: workspace.rootTilingContainer, virtual: true, fullscreenCoversAll: false)
-        {
-            guard let targetCenter = try? await target.getCenter(.nonCancellable) else { continue }
+        if let (target, targetCenter) = floating.target {
             guard let _tilingParent = target.parent as? TilingContainer else { continue }
+            guard _tilingParent.nodeWorkspace == workspace else { continue }
             tilingParent = _tilingParent
             index = switch tilingParent.layout {
                 case .tiles:
@@ -181,6 +205,12 @@ struct FocusCommand: Command {
     for floating in floatingWindows {
         floating.window.bind(to: workspace.floatingWindowsContainer, adaptiveWeight: floating.adaptiveWeight, index: INDEX_BIND_LAST)
     }
+}
+
+private struct FloatingWindowCenter {
+    let window: Window
+    let center: CGPoint
+    let target: (window: Window, center: CGPoint)? // The tiling window under the floating window center
 }
 
 private struct FloatingWindowData {

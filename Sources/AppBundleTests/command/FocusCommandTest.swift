@@ -122,6 +122,81 @@ final class FocusCommandTest: XCTestCase {
         assertEquals(focus.windowOrNil?.windowId, 3)
     }
 
+    // https://github.com/nikitabobko/AeroSpace/issues/1311
+    func testConcurrentFocusOverFloatingWindows() async throws {
+        let workspace = Workspace.get(byName: name)
+        let window1 = TestWindow.new(id: 1, parent: workspace.floatingWindowsContainer, rect: Rect(topLeftX: 0, topLeftY: 0, width: 100, height: 100))
+        let window2 = TestWindow.new(id: 2, parent: workspace.floatingWindowsContainer, rect: Rect(topLeftX: 10, topLeftY: 10, width: 100, height: 100))
+        assertEquals(window1.focusWindow(), true)
+
+        let (suspended1, resume1) = window1.suspendNextGetAxRect()
+        let command1 = Task.startUnstructured { _ = await parseCommand("focus right").cmdOrDie.run(.defaultEnv, .emptyStdin) }
+        try await suspended1.await()
+        let (suspended2, resume2) = window2.suspendNextGetAxRect()
+        let command2 = Task.startUnstructured { _ = await parseCommand("focus right").cmdOrDie.run(.defaultEnv, .emptyStdin) }
+        try await suspended2.await()
+
+        // Both commands are suspended in AX requests. The tree must stay untouched
+        assertEquals(workspace.floatingWindows.map(\.windowId), [1, 2])
+        assertEquals(workspace.rootTilingContainer.allLeafWindowsRecursive.map(\.windowId), [])
+
+        await resume1.signalToAll()
+        await command1.value
+        await resume2.signalToAll()
+        await command2.value
+
+        assertEquals(focus.windowOrNil?.windowId, 2)
+        assertEquals(workspace.floatingWindows.map(\.windowId).sorted(), [1, 2])
+        assertEquals(workspace.rootTilingContainer.allLeafWindowsRecursive.map(\.windowId), [])
+    }
+
+    // https://github.com/nikitabobko/AeroSpace/issues/1311
+    func testFocusOverFloatingWindowsWhenFloatingWindowIsClosedDuringAxRequest() async throws {
+        let workspace = Workspace.get(byName: name)
+        let window1 = TestWindow.new(id: 1, parent: workspace.floatingWindowsContainer, rect: Rect(topLeftX: 0, topLeftY: 0, width: 100, height: 100))
+        let window2 = TestWindow.new(id: 2, parent: workspace.floatingWindowsContainer, rect: Rect(topLeftX: 10, topLeftY: 10, width: 100, height: 100))
+        TestWindow.new(id: 3, parent: workspace.floatingWindowsContainer, rect: Rect(topLeftX: 20, topLeftY: 20, width: 100, height: 100))
+        assertEquals(window1.focusWindow(), true)
+
+        let (suspended, resume) = window2.suspendNextGetAxRect()
+        let command = Task.startUnstructured { _ = await parseCommand("focus right").cmdOrDie.run(.defaultEnv, .emptyStdin) }
+        try await suspended.await()
+        window2.closeAxWindow() // Unbinds the window, the same way as MacWindow.garbageCollect does
+        await resume.signalToAll()
+        await command.value
+
+        assertEquals(focus.windowOrNil?.windowId, 3)
+        assertFalse(window2.isBound)
+        assertEquals(workspace.floatingWindows.map(\.windowId).sorted(), [1, 3])
+        assertEquals(workspace.rootTilingContainer.allLeafWindowsRecursive.map(\.windowId), [])
+    }
+
+    // https://github.com/nikitabobko/AeroSpace/issues/1311
+    func testFocusOverFloatingWindowsWhenTilingWindowIsClosedDuringAxRequest() async throws {
+        let workspace = Workspace.get(byName: name)
+        let rect1 = Rect(topLeftX: 0, topLeftY: 0, width: 960, height: 1080)
+        let tiling1 = TestWindow.new(id: 1, parent: workspace.rootTilingContainer, rect: rect1)
+        tiling1.lastAppliedLayoutVirtualRect = rect1
+        let rect2 = Rect(topLeftX: 960, topLeftY: 0, width: 960, height: 1080)
+        let tiling2 = TestWindow.new(id: 2, parent: workspace.rootTilingContainer, rect: rect2)
+        tiling2.lastAppliedLayoutVirtualRect = rect2
+        // The center of the floating window 3 is to the right of the center of the tiling window 2
+        TestWindow.new(id: 3, parent: workspace.floatingWindowsContainer, rect: Rect(topLeftX: 1400, topLeftY: 400, width: 200, height: 200))
+        let floating4 = TestWindow.new(id: 4, parent: workspace.floatingWindowsContainer, rect: Rect(topLeftX: 100, topLeftY: 400, width: 200, height: 200))
+        assertEquals(tiling2.focusWindow(), true)
+
+        let (suspended, resume) = floating4.suspendNextGetAxRect()
+        let command = Task.startUnstructured { _ = await parseCommand("focus right").cmdOrDie.run(.defaultEnv, .emptyStdin) }
+        try await suspended.await()
+        tiling1.closeAxWindow() // Shifts the index of the tiling window 2
+        await resume.signalToAll()
+        await command.value
+
+        assertEquals(focus.windowOrNil?.windowId, 3)
+        assertEquals(workspace.floatingWindows.map(\.windowId).sorted(), [3, 4])
+        assertEquals(workspace.rootTilingContainer.allLeafWindowsRecursive.map(\.windowId), [2])
+    }
+
     func testFocusAlongTheContainerOrientation() async {
         Workspace.get(byName: name).rootTilingContainer.apply {
             assertEquals(TestWindow.new(id: 1, parent: $0).focusWindow(), true)
