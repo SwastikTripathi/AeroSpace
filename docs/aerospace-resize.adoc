@@ -19,15 +19,15 @@ aerospace resize [-h|--help] [--window-id <window-id>] (smart|smart-opposite|wid
 // tag::body[]
 {manpurpose}
 
-The dimension to resize is chosen by the first argument
+The dimension to resize is chosen by the first argument:
 
 * `width` changes width
 * `height` changes height
 * `smart` changes width if the parent has horizontal orientation, and
 it changes height if the parent has vertical orientation
-* `smart-opposite` resizes the opposite axis of smart
+* `smart-opposite` resizes the opposite axis of `smart`
 
-Second argument controls how much the size changes
+The second argument controls how much the size changes:
 
 * If the `<number>` is prefixed with `+` then the dimension is increased
 * If the `<number>` is prefixed with `-` then the dimension is decreased

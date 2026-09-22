@@ -2,7 +2,7 @@
 include::util/man-attributes.adoc[]
 :manname: aerospace-list-apps
 // tag::purpose[]
-:manpurpose: Print the list of running applications that appears in the Dock and may have a user interface
+:manpurpose: Print the list of running applications that appear in the Dock and may have a user interface
 // end::purpose[]
 
 // =========================================================== Synopsis
@@ -19,7 +19,7 @@ aerospace list-apps [-h|--help] [--macos-native-hidden [no]] [--format <output-f
 // tag::body[]
 {manpurpose}
 
-The command is useful to inspect list of applications to compose filter for xref:guide.adoc#on-window-detected-callback[on-window-detected callback]
+The command is useful for inspecting the list of applications to compose a filter for the xref:guide.adoc#on-window-detected-callback[on-window-detected callback].
 
 // =========================================================== Options
 include::util/conditional-options-header.adoc[]
@@ -37,7 +37,7 @@ Incompatible with `--count`
 Incompatible with: `--format`, `--json`
 
 --json:: Output in JSON format.
-Can be used in combination with `--format` to specify which data to include into the json.
+Can be used in combination with `--format` to specify which data to include in the JSON.
 Incompatible with `--count`
 
 // =========================================================== Output Format
@@ -57,7 +57,7 @@ The following variables can be used inside `<output-format>`:
 %{app-exec-path}:: String. Application executable path
 %{app-bundle-path}:: String. Application bundle path
 
-%{right-padding}:: A special variable which expands with a minimum number of spaces required to form a right padding in the appropriate column
+%{right-padding}:: A special variable which expands to the minimum number of spaces required to form a right padding in the appropriate column
 %{newline}:: Unicode U+000A newline symbol `\n`
 %{tab}:: Unicode U+0009 tab symbol `\t`
 

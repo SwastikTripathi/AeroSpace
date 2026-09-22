@@ -22,23 +22,23 @@ aerospace config [-h|--help] --config-path
 // tag::body[]
 {manpurpose}
 
-For now, only `mode.*` config options are supported
+For now, only `mode.*` config options are supported.
 
-Under the hood, the config is represented as recursive data structure of maps, arrays, strings, and integers.
+Under the hood, the config is represented as a recursive data structure of maps, arrays, strings, and integers.
 
-Printing without `--json` or `--keys` flag is supported only for scalar types (strings and integers) and array of scalar types.
-Printing other complicated objects requires `--json` or `--keys` flag.
+Printing without the `--json` or `--keys` flag is supported only for scalar types (strings and integers) and arrays of scalar types.
+Printing other complicated objects requires the `--json` or `--keys` flag.
 
 // =========================================================== Options
 include::util/conditional-options-header.adoc[]
 
 -h, --help:: Print help
---get <name>:: Get the value for a given key. You can inspect available keys with `--major-keys` or `--all-keys`
+--get <name>:: Get the value for a given key. You can inspect the available keys with `--major-keys` or `--all-keys`
 --major-keys:: Print major keys
 --all-keys:: Print all available keys recursively
 --json:: Print result in JSON format
---keys:: Print keys of the complicated object (map or array)
---config-path:: Print absolute path to the loaded config
+--keys:: Print the keys of a complicated object (map or array)
+--config-path:: Print the absolute path to the loaded config
 
 // =========================================================== Examples
 include::util/conditional-examples-header.adoc[]

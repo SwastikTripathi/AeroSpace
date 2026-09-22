@@ -43,7 +43,7 @@ Incompatible with `--format`
 
 --json::
 Output in JSON format.
-Can be used in combination with `--format` to specify which data to include into the json.
+Can be used in combination with `--format` to specify which data to include in the JSON.
 Incompatible with `--count`
 
 // =========================================================== Output Format
@@ -58,11 +58,11 @@ If not specified, the default `<output-format>` is: +
 The following variables can be used inside `<output-format>`:
 
 %{monitor-id}:: 1-based Number. Sequential number of the belonging monitor
-%{monitor-appkit-nsscreen-screens-id}:: 1-based index of the belonging monitor in `NSScreen.screens` array. Useful for integration with other tools that might be using `NSScreen.screens` ordering (like sketchybar).
+%{monitor-appkit-nsscreen-screens-id}:: 1-based index of the belonging monitor in `NSScreen.screens` array. Useful for integration with other tools that might be using `NSScreen.screens` ordering (like SketchyBar).
 %{monitor-name}:: String. Name of the belonging monitor
-%{monitor-is-main}:: Boolean. True if the monitor is main.
+%{monitor-is-main}:: Boolean. `true` if the monitor is main.
 
-%{right-padding}:: A special variable which expands with a minimum number of spaces required to form a right padding in the appropriate column
+%{right-padding}:: A special variable which expands to the minimum number of spaces required to form a right padding in the appropriate column
 %{newline}:: Unicode U+000A newline symbol `\n`
 %{tab}:: Unicode U+0009 tab symbol `\t`
 

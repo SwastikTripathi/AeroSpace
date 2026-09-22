@@ -25,14 +25,14 @@ aerospace volume [-h|--help] set <number> [--no-gui]
 include::./util/conditional-options-header.adoc[]
 
 -h, --help:: Print help
---no-gui:: Don't show volume GUI indicator
+--no-gui:: Don't show the volume GUI indicator
 
 // =========================================================== Arguments
 include::./util/conditional-arguments-header.adoc[]
 
 (up|down):: Increase or decrease the volume
 (mute-toggle|mute-on|mute-off):: Toggle/On/Off mute
-set <number>:: Set volume to the exact value on scale from 0 to 100
+set <number>:: Set volume to the exact value on a scale from 0 to 100
 
 // end::body[]
 

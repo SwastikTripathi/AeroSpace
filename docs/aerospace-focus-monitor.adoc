@@ -34,12 +34,12 @@ include::./util/conditional-arguments-header.adoc[]
 Focus monitor in direction relative to the focused monitor
 
 (next|prev)::
-Focus next|prev monitor in order they appear in tray icon
+Focus the next|prev monitor in the order they appear in the tray icon
 
 <monitor-pattern>...::
 Find the first matching monitor and focus it.
-Multiple monitor patterns is useful for different monitor configurations.
-Monitor patterns follow the same format as in `workspace-to-monitor-force-assignment` config option
+Multiple monitor patterns are useful for different monitor configurations.
+Monitor patterns follow the same format as in the `workspace-to-monitor-force-assignment` config option
 
 // end::body[]
 

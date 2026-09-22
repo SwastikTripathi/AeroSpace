@@ -25,13 +25,13 @@ include::./util/conditional-options-header.adoc[]
 -h, --help:: Print help
 
 --stdin::
-Capture CLIs stdin and forward it to `<aerospace-shell-expr>`.
+Capture the CLI's stdin and forward it to `<aerospace-shell-expr>`.
 If not supplied, stdin is ignored.
 
 // =========================================================== Arguments
 include::./util/conditional-arguments-header.adoc[]
 
-<aerospace-shell-expr>:: This argument is AeroSpace's shell expression.
+<aerospace-shell-expr>:: An AeroSpace shell expression.
 See https://nikitabobko.github.io/AeroSpace/guide#shell for more info.
 
 // =========================================================== Examples

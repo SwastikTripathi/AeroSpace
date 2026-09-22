@@ -19,18 +19,18 @@ aerospace debug-windows [-h|--help] [--window-id <window-id>]
 // tag::body[]
 {manpurpose}
 
-Use this command output to report bug reports about incorrect windows handling
-(e.g. some windows are floated when they shouldn't).
+Use the output of this command to report bugs about incorrect window handling
+(e.g. some windows are floated when they shouldn't be).
 
 The intended usage is the following:
 
 . Run the command to start the debug session recording
-. Focus problematic window or make the window appear.
+. Focus the problematic window or make the window appear.
 . Run the command one more time to stop the debug session recording and print the results
 
-`debug-windows` command is *not stable API*.
-Please *don't rely on* the command existence and output format.
-The only intended use case is to report bugs about incorrect windows handling.
+The `debug-windows` command is *not a stable API*.
+Please *don't rely on* the existence of the command or its output format.
+The only intended use case is to report bugs about incorrect window handling.
 
 // =========================================================== Options
 include::util/conditional-options-header.adoc[]

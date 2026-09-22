@@ -13,17 +13,17 @@ You can skip parts that are obvious.
 [#homebrew-installation]
 === Homebrew installation (Preferred)
 
-https://brew.sh/[Homebrew] is a package manager for macOS
+https://brew.sh/[Homebrew] is a package manager for macOS.
 
 [source,bash]
 ----
 brew install --cask nikitabobko/tap/aerospace
 ----
 
-*(Optional)* You might need to configure your shell to enable completion provided by homebrew packages: https://docs.brew.sh/Shell-Completion
+*(Optional)* You might need to configure your shell to enable completions provided by Homebrew packages: https://docs.brew.sh/Shell-Completion
 AeroSpace provides bash, fish and zsh completions.
 
-You can also install specific previous https://github.com/nikitabobko/homebrew-tap/tree/main/Casks[pinned homebrew Casks versions]:
+You can also install a specific previous version from the https://github.com/nikitabobko/homebrew-tap/tree/main/Casks[pinned Homebrew Cask versions]:
 [source,bash]
 ----
 brew install --cask nikitabobko/tap/aerospace@0.12.0
@@ -32,29 +32,29 @@ brew install --cask nikitabobko/tap/aerospace@0.12.0
 [#manual-installation]
 === Manual installation
 
-. Download the latest available zip from https://github.com/nikitabobko/AeroSpace/releases[releases page]
-. Unpack zip
-. Put unpacked `AeroSpace-v$VERSION/AeroSpace.app` to `/Applications`
-. Put unpacked `AeroSpace-v$VERSION/bin/aerospace` anywhere to `$PATH`
-(The step is optional. It is only needed if you want to be able to interact with AeroSpace from CLI)
+. Download the latest available zip from the https://github.com/nikitabobko/AeroSpace/releases[releases page]
+. Unpack the zip
+. Put the unpacked `AeroSpace-v$VERSION/AeroSpace.app` into `/Applications`
+. Put the unpacked `AeroSpace-v$VERSION/bin/aerospace` anywhere in your `$PATH`
+(This step is optional. It is only needed if you want to interact with AeroSpace from the CLI)
 
-If you see this message
+If you see this message:
 
 ----
 "AeroSpace.app" can't be opened because Apple cannot check it for malicious software.
 ----
 
-**Option 1** to resolve the problem
+**Option 1** to resolve the problem:
 
 ```
 xattr -d com.apple.quarantine /Applications/AeroSpace.app
 ```
 
-**Option 2** to resolve the problem
+**Option 2** to resolve the problem:
 
-. navigate in Finder to `/Applications/AeroSpace.app`
-. Right mouse click
-. Open (yes, it's that stupid)
+. Navigate in Finder to `/Applications/AeroSpace.app`
+. Right-click it
+. Click Open (yes, it's that stupid)
 
 [#configuring-aerospace]
 == Configuring AeroSpace
@@ -66,9 +66,9 @@ AeroSpace tries to find the custom config in two locations:
 
 . `~/.aerospace.toml`
 . `+${XDG_CONFIG_HOME}/aerospace/aerospace.toml+`
-(environment variable `XDG_CONFIG_HOME` fallbacks to `~/.config` if the variable is not presented)
+(the `XDG_CONFIG_HOME` environment variable falls back to `~/.config` if the variable is not present)
 
-If the config is found in more than one location then the ambiguity is reported.
+If the config is found in more than one location, then the ambiguity is reported.
 
 === Config samples
 
@@ -78,26 +78,26 @@ Please see the following config samples:
 * xref:./goodies.adoc#i3-like-config[i3 like config]
 * {url-search-for-config}[Search for configs by other users on GitHub] for inspiration
 
-AeroSpace uses TOML 1.1.0 format for the config.
-See https://toml.io/en/v1.1.0[TOML spec for more info]
+AeroSpace uses the TOML 1.1.0 format for the config.
+See the https://toml.io/en/v1.1.0[TOML spec] for more info.
 
 [#default-config]
 === Default config
 
-The default config is part of the documentation, it contains all trivial configuration keys with comments.
+The default config is part of the documentation. It contains all trivial configuration keys with comments.
 Please read the default config!
-Non-trivial configuration options are mentioned further in this guide.
+Non-trivial configuration options are covered further in this guide.
 If no custom config is found, AeroSpace will load the default config.
 
-If the key is omitted in the custom config, it falls back to the value in the default config, unless it's stated otherwise for the specific keys. Namely:
+If a key is omitted in the custom config, it falls back to the value in the default config, unless stated otherwise for specific keys. Namely:
 
-* `mode.*.binding`. It falls back to the empty TOML table. Your config is the source of truth for keyboard bindings. You must explicitly mention all the keyboard bindings and <<binding-modes,binding modes>> in your config.
-* `on-focused-monitor-changed`. It falls back to the empty TOML array.
-* `exec` TOML table. See: <<exec-env-vars>> (It's so boring and verbose, I don't even want to mention it in the `default-config.toml`)
+* `mode.*.binding`. It falls back to an empty TOML table. Your config is the source of truth for keyboard bindings. You must explicitly mention all the keyboard bindings and <<binding-modes,binding modes>> in your config.
+* `on-focused-monitor-changed`. It falls back to an empty TOML array.
+* `exec` TOML table. See: <<exec-env-vars>> (It's so boring and verbose that I don't even want to mention it in the `default-config.toml`)
 
-Rule of thumb: all the "scalar like" values always fall back to the default config. All the "vector like" values fall back to the empty TOML array or table.
+Rule of thumb: all the "scalar-like" values always fall back to the default config. All the "vector-like" values fall back to an empty TOML array or table.
 
-That allows you to keep your config tidy and clean from trivial config keys for which you like the default values.
+That allows you to keep your config tidy and free of trivial config keys whose default values you are happy with.
 You can bootstrap your custom config by copying the default config from the app installation:
 
 [source,shell]
@@ -120,7 +120,7 @@ When you switch to a different binding mode, all the bindings from the current m
 The initial binding mode that AeroSpace starts out with is "main".
 
 This feature is absolutely identical to the one
-https://i3wm.org/docs/userguide.html#binding_modes[in i3]
+https://i3wm.org/docs/userguide.html#binding_modes[in i3].
 
 Working with binding modes consists of two parts:
 1. defining a binding to switch to the binding mode and 2. declaring the binding mode itself.
@@ -138,9 +138,9 @@ Working with binding modes consists of two parts:
 [#commands]
 === Commands
 
-Commands are the thing you use to manipulate AeroSpace and query its state.
+Commands are what you use to manipulate AeroSpace and query its state.
 
-There are two ways on how you can use commands:
+There are two ways to use commands:
 
 . Bind keys to run AeroSpace commands. Example:
 +
@@ -152,20 +152,20 @@ There are two ways on how you can use commands:
     # Or bind a sequence of commands
     alt-shift-1 = 'move-node-to-workspace 1; workspace 1'
 ----
-. Run commands in CLI. Open up a Terminal.app and type:
+. Run commands in the CLI. Open Terminal.app and type:
 +
 [source,bash]
 ----
 aerospace workspace 1
 ----
 
-For the list of available commands see: xref:commands.adoc[]
+For the list of available commands, see: xref:commands.adoc[]
 
 [#shell]
 === Shell
 
 AeroSpace reimplements a small subset of Shell syntax.
-Namely, the well-known operators: `;`, `||`, `&&`, `|`, and parenthesis to specify the precedence (listed in the precedence order).
+Namely, the well-known operators: `;`, `||`, `&&`, `|`, and parentheses to specify the precedence (listed in the precedence order).
 
 That is what allows you to combine commands and run them in sequence or pipe one into another:
 
@@ -177,26 +177,26 @@ That is what allows you to combine commands and run them in sequence or pipe one
     alt-right = 'list-workspaces --monitor focused --empty no | workspace --stdin next'
 ----
 
-This Shell-like string is exactly what you pass to the xref:./commands.adoc#eval[eval command] argument.
+This Shell-like string is exactly what you pass as the argument of the xref:./commands.adoc#eval[eval command].
 
 [NOTE]
 ====
-*(1)* In traditional Shell, `||` and `&&` have the same precedence and are left associative,
+*(1)* In traditional Shell, `||` and `&&` have the same precedence and are left-associative,
 so `foo || bar && baz` parses as `(foo || bar) && baz`.
 AeroSpace's shell syntax diverges from that dubious design decision.
 
-Instead, it follows the hopefully more intuitive precedence rules, where `&&` operator has bigger binding power,
+Instead, it follows the hopefully more intuitive precedence rules, where the `&&` operator has a higher binding power,
 so the very same command above parses as `foo || (bar && baz)`.
 
-*(2)* In AeroSpace, the pipe operator `|` semantic matches `set -o pipefail` from traditional shells.
+*(2)* In AeroSpace, the semantics of the pipe operator `|` match `set -o pipefail` in traditional shells.
 ====
 
 [#key-mapping]
 === Keyboard layouts and key mapping
 
-By default, key bindings in the config are perceived as `qwerty` layout.
+By default, key bindings in the config are interpreted according to the `qwerty` layout.
 
-If you use different layout, different alphabet, or you just want to have a fancy alias for the existing key, you can use `key-mapping.key-notation-to-key-code`.
+If you use a different layout or a different alphabet, or you just want a fancy alias for an existing key, you can use `key-mapping.key-notation-to-key-code`.
 
 [source,toml]
 ----
@@ -222,28 +222,28 @@ key-mapping.preset = 'dvorak'  # or 'colemak'
 `config-version` is a mechanism for introducing breaking changes to AeroSpace.
 
 Omitting `config-version` is equivalent to `config-version = 1` (the lowest possible version).
-The currently highest possible version is 2.
+The highest currently possible version is 2.
 It is recommended to use that version.
 
-If `config-version` is lower than the highest possible, xref:./commands.adoc#reload-config[reload-config] will emit a warning to stderr.
+If `config-version` is lower than the highest possible version, xref:./commands.adoc#reload-config[reload-config] will emit a warning to stderr.
 
 [#config-version-2]
 ==== config-version = 2
 
-By specifying `config-version = 2`, you opt-in to the following behavior:
+By specifying `config-version = 2`, you opt in to the following behavior:
 
-* You unlock the possibility to specify `persistent-workspaces` config option in your config explicitly.
+* You unlock the ability to explicitly specify the `persistent-workspaces` config option in your config.
 * The fallback value of `persistent-workspaces` becomes an empty array
-(In `config-version = 1`, the fallback value of `persistent-workspaces` was inferred from the right hand side of your keyboard bindings. It's proved to be error-prone)
+(In `config-version = 1`, the fallback value of `persistent-workspaces` is inferred from the right-hand side of your keyboard bindings. It has proven to be error-prone)
 
 [#after-startup-command]
 === after-startup-command
 
-You use `after-startup-command` to run arbitrary commands on AeroSpace startup.
+You can use `after-startup-command` to run arbitrary commands on AeroSpace startup.
 
 Common use cases:
 
-. Run third-party tool on AeroSpace startup (e.g. Sketchybar)
+. Run a third-party tool on AeroSpace startup (e.g. SketchyBar)
 . Set default layouts for specific workspaces
 +
 [source,toml]
@@ -257,9 +257,9 @@ after-startup-command = [
 [#exec-env-vars]
 === exec-* Environment Variables
 
-You can configure environment variables of `exec-*` commands and callbacks (such as xref:commands.adoc#exec-and-forget[exec-and-forget], <<exec-on-workspace-change-callback>>)
+You can configure environment variables of `exec-*` commands and callbacks (such as xref:commands.adoc#exec-and-forget[exec-and-forget], <<exec-on-workspace-change-callback>>).
 
-* `exec.inherit-env-vars = true` configures whether inherit environment variables of `AeroSpace.app` or not. (The default is `true`)
+* `exec.inherit-env-vars = true` configures whether to inherit environment variables of `AeroSpace.app` or not. (The default is `true`)
 * You can override env variables with the following syntax:
 +
 [source,toml]
@@ -268,10 +268,10 @@ You can configure environment variables of `exec-*` commands and callbacks (such
     PATH = '${HOME}/bin:${PATH}'
 ----
 +
-Environment variable substitution is supported in form of `+${ENV_VAR}+`
-* You can inspect what is the end result of environment variables using xref:commands.adoc#list-exec-env-vars[`list-exec-env-vars` command]
+Environment variable substitution is supported in the form of `+${ENV_VAR}+`
+* You can inspect the resulting environment variables using the xref:commands.adoc#list-exec-env-vars[`list-exec-env-vars` command]
 * GUI apps on macOS don’t have Homebrew’s prefix in their `PATH` by default (https://docs.brew.sh/FAQ#my-mac-apps-dont-find-homebrew-utilities[docs.brew.sh]).
-That's why unless you override `exec` section in your config, AeroSpace falls back to the following `exec` configuration:
+That's why, unless you override the `exec` section in your config, AeroSpace falls back to the following `exec` configuration:
 +
 [source,toml]
 ----
@@ -285,23 +285,23 @@ That's why unless you override `exec` section in your config, AeroSpace falls ba
 == Tree
 
 AeroSpace stores all windows and containers in a tree.
-AeroSpace tree tiling model is https://i3wm.org/docs/userguide.html#tree[inspired by i3].
+AeroSpace's tree tiling model is https://i3wm.org/docs/userguide.html#tree[inspired by i3].
 
-*Definition.* Each non-leaf node is called a "Container"
+*Definition.* Each non-leaf node is called a "Container".
 
-WARNING: i3 has a different terminology.
+WARNING: i3 uses different terminology.
 "container" in i3 is the same as "node" in AeroSpace.
 
 * Each workspace contains its own single root node
-* Each container can contain arbitrary number of children nodes
-* Windows are the only possible leaf nodes. Windows contain zero children nodes
+* Each container can contain an arbitrary number of child nodes
+* Windows are the only possible leaf nodes. Windows contain zero child nodes
 * Every container has two properties:
 . <<layouts,Layout>> (Possible values: `tiles`, `accordion`)
 . Orientation (Possible values: `horizontal`, `vertical`)
 
 When we say "layout of the window", we refer to the layout of the window’s parent container.
 
-It’s easier to understand tree tiling model by looking at examples
+It’s easier to understand the tree tiling model by looking at examples:
 
 .Simple tree structure. Two windows side-by-side
 image::assets/h_tiles.png[]
@@ -312,7 +312,7 @@ image::assets/tree.png[]
 You can nest containers as deeply as you want to.
 
 You can navigate in the tree in 4 possible cardinal directions (left, down, up, right).
-You use xref:commands.adoc#focus[focus command] to do that.
+You use the xref:commands.adoc#focus[focus command] to do that.
 
 The tree structure can be changed with three commands:
 
@@ -346,17 +346,17 @@ image::assets/v_accordion.png[,800,align="center"]
 Just like in a `tiles` layout, you can use the xref:commands.adoc#focus[focus] command to navigate an accordion layout.
 
 You can navigate the windows in an `h_accordion` by using the `focus (left|right)` command.
-While in a `v_accordion`, you can navigate the windows using the `focus (up|down)` command.
+In a `v_accordion`, you can navigate the windows using the `focus (up|down)` command.
 
-Accordion padding is configurable via `accordion-padding` option.
+Accordion padding is configurable via the `accordion-padding` option.
 
 [#normalization]
 === Normalization
 
-By default, AeroSpace does two types of tree normalizations:
+By default, AeroSpace performs two types of tree normalizations:
 
 . Containers that have only one child are "flattened".
-The root container is an exception, it is allowed to have a single window child.
+The root container is an exception: it is allowed to have a single window child.
 Configured by `enable-normalization-flatten-containers`
 . Containers that nest into each other must have opposite orientations.
 Configured by `enable-normalization-opposite-orientation-for-nested-containers`
@@ -364,7 +364,7 @@ Configured by `enable-normalization-opposite-orientation-for-nested-containers`
 [.lead]
 *Example 1*
 
-According to the first normalization, such layout isn’t possible:
+According to the first normalization, such a layout isn’t possible:
 
 ----
 h_tiles (root node)
@@ -372,7 +372,7 @@ h_tiles (root node)
     └── window 1
 ----
 
-it will be immediately transformed into
+It will be immediately transformed into:
 
 ----
 v_tiles (new root node)
@@ -382,7 +382,7 @@ v_tiles (new root node)
 [.lead]
 *Example 2*
 
-According to the second normalization, such layout isn’t possible:
+According to the second normalization, such a layout isn’t possible:
 
 ----
 h_tiles
@@ -392,7 +392,7 @@ h_tiles
     └── window 3
 ----
 
-it will be immediately transformed into
+It will be immediately transformed into:
 
 ----
 h_tiles
@@ -403,7 +403,7 @@ h_tiles
 ----
 
 Normalizations make it easier to understand the tree structure by looking at how windows are placed on the screen.
-Though you can disable normalizations by placing these lines to your config:
+However, you can disable normalizations by adding these lines to your config:
 
 [source,toml]
 ----
@@ -411,53 +411,53 @@ enable-normalization-flatten-containers = false
 enable-normalization-opposite-orientation-for-nested-containers = false
 ----
 
-Unless you're hardcore i3 user who knows what they are doing, it's recommended to keep the normalizations enabled.
+Unless you're a hardcore i3 user who knows what they are doing, it's recommended to keep the normalizations enabled.
 
 [#floating-windows]
 === Floating windows
 
 Normally, floating windows are not considered to be part of the <<tree,tiling tree>>.
-But it’s not the case with xref:commands.adoc#focus[focus] command.
+But that’s not the case with the xref:commands.adoc#focus[focus] command.
 
-From xref:commands.adoc#focus[focus] command perspective, floating windows are part of <<tree,tiling tree>>.
-The floating window parent container is determined as the smallest tiling container that contains the center of the floating window.
+From the perspective of the xref:commands.adoc#focus[focus] command, floating windows are part of the <<tree,tiling tree>>.
+The parent container of a floating window is determined as the smallest tiling container that contains the center of the floating window.
 
 This technique eliminates the need for an additional binding for focusing floating windows.
 
 [#emulation-of-virtual-workspaces]
 == Emulation of virtual workspaces
 
-Native macOS Spaces have a lot of problems
+Native macOS Spaces have a lot of problems:
 
-* The animation for Spaces switching is slow
-** You can’t disable animation for Spaces switching (you can only make it slightly faster by turning on `Reduce motion` setting, but it’s suboptimal)
-* You have a limit of Spaces (up to 16 Spaces with one monitor)
-* You can’t create/delete/reorder Space and move windows between Spaces with hotkeys (you can only switch between Spaces with hotkeys)
-* Apple doesn't provide public API to communicate with Spaces (create/delete/reorder/switch Space and move windows between Spaces)
+* The animation for switching Spaces is slow
+** You can’t disable the animation for switching Spaces (you can only make it slightly faster by turning on the `Reduce motion` setting, but it’s suboptimal)
+* The number of Spaces is limited (up to 16 Spaces with one monitor)
+* You can’t create/delete/reorder Spaces or move windows between Spaces with hotkeys (you can only switch between Spaces with hotkeys)
+* Apple doesn't provide a public API to communicate with Spaces (create/delete/reorder/switch Spaces and move windows between Spaces)
 
 Since Spaces are so hard to deal with, AeroSpace reimplements Spaces and calls them "Workspaces".
-The idea is that if the workspace isn’t active then all of its windows are placed outside the visible area of the screen, in the bottom right or left corner.
-Once you switch back to the workspace, (e.g. by the means of xref:commands.adoc#workspace[workspace] command, or `cmd + tab`) windows are placed back to the visible area of the screen.
+The idea is that if a workspace isn’t active, then all of its windows are placed outside the visible area of the screen, in the bottom right or left corner.
+Once you switch back to the workspace (e.g. by means of the xref:commands.adoc#workspace[workspace] command, or `cmd + tab`), the windows are placed back into the visible area of the screen.
 
-When you quit the AeroSpace or when the AeroSpace detects that it's about to crash, AeroSpace will place all windows back to the visible area of the screen.
+When you quit AeroSpace or when AeroSpace detects that it's about to crash, AeroSpace will place all windows back into the visible area of the screen.
 
-AeroSpace shows the name of currently active workspace in its tray icon (top right corner), to give users a visual feedback on what workspace is currently active.
+AeroSpace shows the name of the currently active workspace in its tray icon (top right corner) to give users visual feedback on which workspace is currently active.
 
-The intended workflow of using AeroSpace workspaces is to only have one macOS Space (or as many monitors you have, if `Displays have separate Spaces` is enabled) and don’t interact with macOS Spaces anymore.
+The intended workflow for AeroSpace workspaces is to have only one macOS Space (or as many Spaces as you have monitors, if `Displays have separate Spaces` is enabled) and to not interact with macOS Spaces anymore.
 
 [NOTE]
 ====
-For better or worse, macOS doesn’t allow to place windows outside the visible area entirely.
-You will still be able to see a 1 pixel vertical line of "hidden" windows in the bottom right or left corner of your screen.
-That means, that if AeroSpace crashes badly you will still be able to manually "unhide" the windows by dragging these few pixels to the center of the screen.
+For better or worse, macOS doesn’t allow placing windows entirely outside the visible area.
+You will still be able to see a 1-pixel vertical line of "hidden" windows in the bottom right or left corner of your screen.
+That means that if AeroSpace crashes badly, you will still be able to manually "unhide" the windows by dragging these few pixels to the center of the screen.
 
-If you want to minimize the visibility of hidden windows, it's recommended to place Dock in the bottom (and additionally turn automatic hiding on)
+If you want to minimize the visibility of hidden windows, it's recommended to place the Dock at the bottom (and additionally turn on automatic hiding)
 ====
 
 === Proper monitor arrangement
 
-Since AeroSpace needs a free space to hide windows in,
-please make sure to arrange monitors in a way where *every monitor has free space in the bottom right or left corner.* (`System Settings -> Displays -> Arrange...`)
+Since AeroSpace needs free space to hide windows in,
+please make sure to arrange monitors so that *every monitor has free space in the bottom right or left corner.* (`System Settings -> Displays -> Arrange...`)
 
 If you fail to arrange your monitors properly, you will see parts of hidden windows on other monitors.
 
@@ -474,12 +474,12 @@ image::./assets/monitor-arrangement-2-bad.svg[,,align="center"]
 image::./assets/monitor-arrangement-2-good.svg[,,align="center"]
 
 [#a-note-on-mission-control]
-=== A note on mission control
+=== A note on Mission Control
 
-For some reason, mission control doesn't like that AeroSpace puts a lot of windows in the bottom right corner of the screen.
-Mission control shows windows too small even when there is enough space to show them bigger.
+For some reason, Mission Control doesn't like that AeroSpace puts a lot of windows in the bottom right corner of the screen.
+Mission Control shows windows too small even when there is enough space to show them bigger.
 
-There is a workaround. You can enable `Group windows by application` setting:
+There is a workaround. You can enable the `Group windows by application` setting:
 [source,bash]
 ----
 defaults write com.apple.dock expose-group-apps -bool true && killall Dock
@@ -489,40 +489,40 @@ defaults write com.apple.dock expose-group-apps -bool true && killall Dock
 [#a-note-on-displays-have-separate-spaces]
 === A note on '`Displays have separate Spaces`'
 
-There is an observation that macOS works better and more stable if you disable `Displays have separate Spaces`. (It's enabled by default)
+It has been observed that macOS works better and is more stable if you disable `Displays have separate Spaces`. (It's enabled by default)
 People report all sorts of weird issues related to focus and performance when this setting is enabled:
 
-* Wrong window may receive focus in multi-monitor setup: https://github.com/nikitabobko/AeroSpace/issues/101[#101] (Bug in Apple API)
-* Wrong borderless Alacritty window may receive focus in *single monitor* setup: https://github.com/nikitabobko/AeroSpace/issues/247[#247] (Bug in Apple API)
+* The wrong window may receive focus in a multi-monitor setup: https://github.com/nikitabobko/AeroSpace/issues/101[#101] (Bug in Apple API)
+* The wrong borderless Alacritty window may receive focus in a *single monitor* setup: https://github.com/nikitabobko/AeroSpace/issues/247[#247] (Bug in Apple API)
 * Performance issues: https://github.com/nikitabobko/AeroSpace/issues/333[#333]
 * macOS randomly switches focus back: https://github.com/nikitabobko/AeroSpace/issues/289[#289]
 
 When `Displays have separate Spaces` is enabled,
-moving windows between monitors causes windows to move between different Spaces which is not correctly handled by the public APIs AeroSpace uses,
-apparently, these APIs are not aware about Spaces existence.
-Spaces are just cursed in macOS. The less Spaces you have, the better macOS behaves.
+moving windows between monitors causes windows to move between different Spaces, which is not correctly handled by the public APIs that AeroSpace uses.
+Apparently, these APIs are not aware of the existence of Spaces.
+Spaces are just cursed in macOS. The fewer Spaces you have, the better macOS behaves.
 
 |===
 |    |'`Displays have separate Spaces`' is enabled |'`Displays have separate Spaces`' is disabled
 
-|Is it possible for window to span across several monitors?
+|Is it possible for a window to span across several monitors?
 |❌ No. macOS limitation
 |👍 Yes
 
 |Overall stability and performance
 |❌ Weird focus and performance issues may happen (see the list above)
-|👍 Public Apple API are more stable (which in turn affects AeroSpace stability)
+|👍 Public Apple APIs are more stable (which in turn affects AeroSpace stability)
 
 |When the first monitor is in fullscreen
 |👍 Second monitor operates independently
-|❌ Second monitor is unusable black screen
+|❌ Second monitor is an unusable black screen
 
 |macOS status bar ...
 |... is displayed on both monitors
-|... is displayed only on main monitor
+|... is displayed only on the main monitor
 |===
 
-If you don't care about macOS native fullscreen in multi-monitor setup (which is itself clunky anyway, since it creates a separate Space instance),
+If you don't care about macOS native fullscreen in a multi-monitor setup (which is itself clunky anyway, since it creates a separate Space instance),
 I recommend disabling `Displays have separate Spaces`.
 
 You can disable the setting by running:
@@ -530,14 +530,14 @@ You can disable the setting by running:
 ----
 defaults write com.apple.spaces spans-displays -bool true && killall SystemUIServer
 ----
-(or in System Settings: `System Settings -> Desktop & Dock -> Displays have separate Spaces`). Logout is required for the setting to take effect.
+(or in System Settings: `System Settings -> Desktop & Dock -> Displays have separate Spaces`). Logging out is required for the setting to take effect.
 
 == Callbacks
 
 [#on-window-detected-callback]
 === 'on-window-detected' callback
 
-You can use `on-window-detected` config option to run commands every time a new window is detected.
+You can use the `on-window-detected` config option to run commands every time a new window is detected.
 
 [source,toml]
 ----
@@ -556,8 +556,8 @@ When a new window is detected:
 
 . AeroSpace processes the list of the callback objects in the defined order.
 . For every callback object, AeroSpace runs the command in the `if`.
-. If the `if` command exits with zero exit code (successful), then AeroSpace runs the command in the `run` and doesn't process any further callback objects.
-. If the `if` command exits with non-zero exit code (fail), then AeroSpace attempts processing the next object in the list.
+. If the `if` command exits with a zero exit code (success), then AeroSpace runs the command in the `run` and doesn't process any further callback objects.
+. If the `if` command exits with a non-zero exit code (failure), then AeroSpace moves on to the next object in the list.
 
 xref:./commands.adoc#test[test], xref:./commands.adoc#test-not[test-not], xref:./commands.adoc#true[true] and xref:./commands.adoc#false[false] commands are designed to be used inside the `if`.
 
@@ -577,19 +577,19 @@ on-window-detected = [
 ]
 ----
 
-A common use case is to match against app bundle ID in `on-window-detected` callback.
-There are several ways to know `app-bundle-id`:
+A common use case is to match against the app bundle ID in the `on-window-detected` callback.
+There are several ways to find out the `app-bundle-id`:
 
-* Take a look at precompiled xref:./goodies.adoc#popular-apps-ids[list of Apple application IDs]
-* You can use xref:./commands.adoc#list-apps[`aerospace list-apps`] CLI command to get IDs of running applications
+* Take a look at the precompiled xref:./goodies.adoc#popular-apps-ids[list of Apple application IDs]
+* You can use the xref:./commands.adoc#list-apps[`aerospace list-apps`] CLI command to get the IDs of running applications
 * `mdls -name kMDItemCFBundleIdentifier -r /Applications/App.app`
 
 IMPORTANT: Some windows initialize their title after the window appears.
-`window-title-regex-substring` may not work as expected for such windows
+Matching against the window title (e.g. `+test %{window-title} ~= ...+`) may not work as expected for such windows.
 
 Examples of automations:
 
-* Assign apps on particular workspaces
+* Assign apps to particular workspaces
 +
 [source,toml]
 ----
@@ -623,10 +623,10 @@ on-window-detected = [
 
 You can track focus changes using the following callbacks: `on-focus-changed` and `on-focused-monitor-changed`.
 
-* `on-focus-changed` is called every time focused window or workspace changes.
-* `on-focused-monitor-changed` is called every time focused monitor changes.
+* `on-focus-changed` is called every time the focused window or workspace changes.
+* `on-focused-monitor-changed` is called every time the focused monitor changes.
 
-A common use case for the callbacks is to implement "mouse follows focus" behavior. All you need is to combine the callback of your choice with xref:commands.adoc#move-mouse[move-mouse command]:
+A common use case for the callbacks is to implement "mouse follows focus" behavior. All you need is to combine the callback of your choice with the xref:commands.adoc#move-mouse[move-mouse command]:
 [source,toml]
 ----
 on-focused-monitor-changed = ['move-mouse monitor-lazy-center'] # Mouse lazily follows focused monitor (default in i3)
@@ -634,7 +634,7 @@ on-focused-monitor-changed = ['move-mouse monitor-lazy-center'] # Mouse lazily f
 on-focus-changed = ['move-mouse window-lazy-center'] # Mouse lazily follows any focus (window or workspace)
 ----
 
-You shouldn't rely on the order callbacks are called, since it's an implementation detail and can change from version to version.
+You shouldn't rely on the order in which the callbacks are called, since it's an implementation detail and can change from version to version.
 
 The callbacks are "recursion resistant", which means that any focus change within the callback won't retrigger the callback.
 Changing the focus within these callbacks is a bad idea anyway, and the way it's handled will probably change in future versions.
@@ -642,7 +642,7 @@ Changing the focus within these callbacks is a bad idea anyway, and the way it's
 [#exec-on-workspace-change-callback]
 === 'exec-on-workspace-change' callback
 
-`exec-on-workspace-change` callback allows to run arbitrary process when focused workspace changes.
+The `exec-on-workspace-change` callback allows you to run an arbitrary process when the focused workspace changes.
 It may be useful for integrating with bars.
 
 [source,toml]
@@ -655,16 +655,16 @@ exec-on-workspace-change = ['/bin/bash', '-c',
 
 Besides the <<exec-env-vars,`exec.env-vars`>>, the process has access to the following environment variables:
 
-* `AEROSPACE_FOCUSED_WORKSPACE` - the workspace user switched to
-* `AEROSPACE_PREV_WORKSPACE` - the workspace user switched from
+* `AEROSPACE_FOCUSED_WORKSPACE` - the workspace the user switched to
+* `AEROSPACE_PREV_WORKSPACE` - the workspace the user switched from
 
-For a more elaborate example on how to integrate with Sketchybar see
+For a more elaborate example of how to integrate with SketchyBar, see
 xref:./goodies.adoc#show-aerospace-workspaces-in-sketchybar[]
 
 [#environment-variables]
 == Environment variables
 
-When AeroSpace runs a callback's command (such as the `test`/`run` clause of an <<on-window-detected-callback>>, or the command in an <<on-focus-changed-callbacks>>),
+When AeroSpace runs a callback's command (such as the `if`/`run` clause of an <<on-window-detected-callback>>, or the command in an <<on-focus-changed-callbacks>>),
 it adds one of the following environment variables to the command's environment to identify the target the callback fired against:
 
 * `AEROSPACE_WINDOW_ID` - the numeric ID of a specific window
@@ -719,36 +719,36 @@ The full resolution order, from highest to lowest priority, is:
 
 * The pool of workspaces is shared between monitors
 * Each monitor shows its own workspace.
-The showed workspaces are called "visible" workspaces
+The shown workspaces are called "visible" workspaces
 * Different monitors can’t show the same workspace at the same time
 * Each workspace (even invisible, even empty) has a monitor assigned to it
-* By default, all workspaces are assigned to the "main" monitor ("main" as in `System -> Displays -> Use as`)
+* By default, all workspaces are assigned to the "main" monitor ("main" as in `System Settings -> Displays -> Use as`)
 
 When you switch to a workspace:
 
-. AeroSpace takes the assigned monitor of the workspace and makes the workspace visible on the monitor
+. AeroSpace takes the assigned monitor of the workspace and makes the workspace visible on that monitor
 . AeroSpace focuses the workspace
 
-You can move workspace to a different monitor with xref:commands.adoc#move-workspace-to-monitor[move-workspace-to-monitor] command.
+You can move a workspace to a different monitor with the xref:commands.adoc#move-workspace-to-monitor[move-workspace-to-monitor] command.
 
-The idea of making pool of workspaces shared is based on [#observation]*the observation* that most users have a limited set of workspaces on their secondary monitors.
-Secondary monitors are frequently dedicated to specific tasks (browser, shell), or for monitoring various activities such as logs and dashboards.
+The idea of making the pool of workspaces shared is based on [#observation]*the observation* that most users have a limited set of workspaces on their secondary monitors.
+Secondary monitors are frequently dedicated to specific tasks (browser, shell), or to monitoring various activities such as logs and dashboards.
 Thus, using one workspace per secondary monitor and "the rest" on the main monitor often makes sense.
 
 [NOTE]
 ====
 The only difference between AeroSpace and i3 is switching to empty workspaces.
-When you switch to an empty workspace, AeroSpace puts the workspace on an assigned monitor; i3 puts the workspace on currently active monitor.
+When you switch to an empty workspace, AeroSpace puts the workspace on its assigned monitor; i3 puts the workspace on the currently active monitor.
 
-* I find that AeroSpace model works better with <<observation,_the observation_>> listed above.
-* AeroSpace model is more consistent (it works the same for empty workspaces and non-empty workspaces)
+* I find that the AeroSpace model works better with <<observation,_the observation_>> listed above.
+* The AeroSpace model is more consistent (it works the same for empty workspaces and non-empty workspaces)
 ====
 
 [#assign-workspaces-to-monitors]
 === Assign workspaces to monitors
 
-You can use `workspace-to-monitor-force-assignment` syntax to assign
-workspaces to always appear on particular monitors
+You can use the `workspace-to-monitor-force-assignment` syntax to make
+workspaces always appear on particular monitors:
 
 [source,toml]
 ----
@@ -762,38 +762,38 @@ workspaces to always appear on particular monitors
                                      #   The first matching pattern will be used
 ----
 
-* Left hand side of the assignment is the workspace name
-* Right hand side of the assignment is the monitor pattern
+* The left-hand side of the assignment is the workspace name
+* The right-hand side of the assignment is the monitor pattern
 
 Supported monitor patterns:
 
 * `main` - "Main" monitor ("main" as in `System Settings -> Displays -> Use as`)
-* `secondary` - Non-main monitor in case when there are only two monitors
+* `secondary` - Non-main monitor when there are only two monitors
 * `<number>` (e.g. `1`, `2`) - Sequence number of the monitor from left to right. 1-based indexing
-* `<regex-pattern>` (e.g. `+dell.*+`, `+built-in.*+`) - Case insensitive regex substring pattern
+* `<regex-pattern>` (e.g. `+dell.*+`, `+built-in.*+`) - Case-insensitive regex substring pattern
 
 You can specify multiple patterns as an array.
-The first matching pattern will be used
+The first matching pattern will be used.
 
-xref:commands.adoc#move-workspace-to-monitor[move-workspace-to-monitor] command has no effect for workspaces that have monitor assignment
+The xref:commands.adoc#move-workspace-to-monitor[move-workspace-to-monitor] command fails for workspaces that have a monitor assignment.
 
 == Dialog heuristics
 
-* Apple provides accessibility API for apps to let others know which of their windows are dialogs
+* Apple provides an accessibility API for apps to let others know which of their windows are dialogs
 * A lot of apps don't implement this API or implement it improperly
 +
 Even some Apple dialogs don't implement the API properly.
-(E.g. Finder "Copy" progress window doesn't let others know that it's a dialog)
+(E.g. the Finder "Copy" progress window doesn't let others know that it's a dialog)
 
 AeroSpace uses the API to gently ask windows whether they are dialogs, but AeroSpace also applies some heuristics.
 
-For example, windows without a fullscreen button (NB! fullscreen button and maximize button are different buttons) are generally considered dialogs, excluding terminal apps (WezTerm, Alacritty, iTerm2, etc.).
+For example, windows without a fullscreen button (NB! the fullscreen button and the maximize button are different buttons) are generally considered dialogs, excluding terminal apps (WezTerm, Alacritty, iTerm2, etc.).
 
 Windows that are recognized as dialogs are floated by default.
 
 If you find that some windows are not handled properly, you're welcome to create a PR that improves the heuristic.
-It's fine to hardcode special handling for popular applications, AeroSpace already does it.
-Please see `isDialogHeuristic` function in AeroSpace sources.
+It's fine to hardcode special handling for popular applications; AeroSpace already does it.
+Please see the `isDialogHeuristic` function in the AeroSpace sources.
 
 You can also use `on-window-detected` to force tile or force float all windows of a particular application:
 
@@ -803,7 +803,7 @@ You can also use `on-window-detected` to force tile or force float all windows o
 ----
 on-window-detected = [
     # Other callbacks...
-    { if.app-id = '...', run = 'layout tiling', },
+    { if = 'test %{app-bundle-id} = ...', run = 'layout tiling', },
     # Other callbacks...
 ]
 ----
@@ -813,14 +813,14 @@ on-window-detected = [
 ----
 on-window-detected = [
     # Other callbacks...
-    { if.app-id = '...', run = 'layout floating', },
+    { if = 'test %{app-bundle-id} = ...', run = 'layout floating', },
     # Other callbacks...
 ]
 ----
 
 == Common pitfall: keyboard keys handling
 
-If you can't make AeroSpace handle some keys in your config, please make sure that you don't have keys conflict with other software that might listen to global keys (e.g. skhd, Karabiner-Elements, Raycast)
+If you can't make AeroSpace handle some keys in your config, please make sure that your keys don't conflict with other software that might listen to global keys (e.g. skhd, Karabiner-Elements, Raycast).
 
 [#socket-protocol]
 == Socket protocol
@@ -852,11 +852,11 @@ Immediately after connecting, both sides perform a *one-shot handshake*:
 . *The Client* writes its `SOCKET_PROTOCOL_VERSION` as a single 4-byte unsigned integer.
 . *The Server* reads the client's `SOCKET_PROTOCOL_VERSION` and decides in what kind of compatibility mode it needs to communicate with this particular client.
 . *The Server* writes its `SOCKET_PROTOCOL_VERSION` as a single 4-byte unsigned integer.
-. *The Client* compares the two versions and decides if it wants to process.
-. *The Server* compares the two versions and decides if it wants to process.
+. *The Client* compares the two versions and decides whether it wants to proceed.
+. *The Server* compares the two versions and decides whether it wants to proceed.
 
 The current and the only valid value for `SOCKET_PROTOCOL_VERSION` is `1`.
-Currently, right after sending its own version, the server disconnects if it doesn't recognise `SOCKET_PROTOCOL_VERSION`.
+Currently, right after sending its own version, the server disconnects if it doesn't recognize `SOCKET_PROTOCOL_VERSION`.
 
 *After the handshake*, every message (in either direction) is a length-prefixed JSON frame:
 
@@ -913,7 +913,7 @@ Some commands (e.g. xref:./commands.adoc#workspace[`workspace --stdin`]) consume
 | `windowId`
 | unsigned 32-bit integer or `null`
 | The value of the `AEROSPACE_WINDOW_ID` environment variable as the client saw it, or `null` if there is no such variable in scope.
-AeroSpace sets this variable when invoking callbacks so that the called commands know the window they was triggered from (see <<environment-variables>>).
+AeroSpace sets this variable when invoking callbacks so that the called commands know the window they were triggered from (see <<environment-variables>>).
 
 | `workspace`
 | string or `null`
@@ -1019,7 +1019,7 @@ with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as s:
 
 === Legacy 'on-window-detected' syntax
 
-The following `if.*` syntax inside `on-window-detected` is soft deprecated.
+The following `if.*` syntax inside `on-window-detected` is soft-deprecated.
 It is still supported, and it will probably remain supported forever given its wide use.
 
 [source,toml]
@@ -1032,7 +1032,7 @@ on-window-detected = [
 ]
 ----
 
-Instead of the `if.*` syntax, you are encouraged to use `if = 'test ...'` syntax.
+Instead of the `if.*` syntax, you are encouraged to use the `if = 'test ...'` syntax.
 See xref:./commands.adoc#test[the test helper command documentation] for more information.
 
 [source,toml]

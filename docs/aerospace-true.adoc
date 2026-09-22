@@ -21,7 +21,7 @@ aerospace true [-h|--help]
 
 The `true` utility returns with an exit code of zero.
 
-The utility might return with a non-zero exit in case of errors (e.g. unexpected CLI arguments)
+The utility might return with a non-zero exit code in case of errors (e.g. unexpected CLI arguments)
 
 // =========================================================== Options
 include::./util/conditional-options-header.adoc[]

@@ -42,7 +42,7 @@ Defines the behavior when requested to move across the `<boundary>`. +
 The default is: `create-implicit-container`
 
 --fail-if-fullscreen::
-Exit with non-zero code if the target window is fullscreen by the `fullscreen` command.
+Exit with non-zero code if the target window is in fullscreen mode (as set by the `fullscreen` command).
 
 --fail-if-macos-native-fullscreen::
 Exit with non-zero code if the target window is in macOS native fullscreen.
@@ -138,7 +138,7 @@ v_tiles
 *Remark*: If `--boundaries` is set to `all-monitors-outer-frame` and there is a monitor in the `up` direction,
 the implicit container isn't created.
 +
-Instead, `window 2` would be moved to the monitor above the current.
+Instead, `window 2` would be moved to the monitor above the current one.
 
 // end::body[]
 

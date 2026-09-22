@@ -2,7 +2,7 @@
 include::util/man-attributes.adoc[]
 :manname: aerospace-move-workspace-to-monitor
 // tag::purpose[]
-:manpurpose: Move workspace to monitor targeted by relative direction, by order, or by pattern.
+:manpurpose: Move workspace to monitor targeted by relative direction, by order, or by pattern
 // end::purpose[]
 
 // =========================================================== Synopsis
@@ -19,16 +19,16 @@ aerospace move-workspace-to-monitor [-h|--help] [--workspace <workspace>] [--] <
 == Description
 
 // tag::body[]
-{manpurpose}
+{manpurpose}.
 Focus follows the focused workspace, so the workspace stays focused.
 
-The command fails for workspaces xref:guide.adoc#assign-workspaces-to-monitors[that have monitor force assignment].
+The command fails for workspaces xref:guide.adoc#assign-workspaces-to-monitors[that have a monitor force assignment].
 
 // =========================================================== Options
 include::./util/conditional-options-header.adoc[]
 
 -h, --help:: Print help
---wrap-around:: Allows to move workspace between first and last monitors
+--wrap-around:: Make it possible to move the workspace between the first and last monitors
 
 --workspace <workspace>::
 include::./util/workspace-flag-desc.adoc[]
@@ -40,13 +40,13 @@ include::./util/conditional-arguments-header.adoc[]
 Move workspace to monitor in direction relative to the focused monitor
 
 (next|prev)::
-Move the workspace to next or prev monitor.
-'next' or 'prev' monitor is calculated relative to the monitor `<workspace>` currently belongs to.
+Move the workspace to the next or prev monitor.
+The 'next' or 'prev' monitor is calculated relative to the monitor `<workspace>` currently belongs to.
 
-<monitor-pattern>::
+<monitor-pattern>...::
 Find the first matching monitor and move the workspace there.
-Multiple monitor patterns is useful for different monitor configurations.
-Monitor patterns follow the same format as in `workspace-to-monitor-force-assignment` config option
+Multiple monitor patterns are useful for different monitor configurations.
+Monitor patterns follow the same format as in the `workspace-to-monitor-force-assignment` config option
 
 // end::body[]
 

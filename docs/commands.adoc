@@ -3,7 +3,7 @@ include::util/site-attributes.adoc[]
 
 include::util/header.adoc[]
 
-Commands documentation is also available as manpages.
+The commands documentation is also available as man pages.
 
 == balance-sizes
 ----
@@ -91,7 +91,6 @@ include::aerospace-focus.adoc[tags=body]
 
 == focus-back-and-forth
 ----
-
 include::./aerospace-focus-back-and-forth.adoc[tags=synopsis]
 ----
 include::./aerospace-focus-back-and-forth.adoc[tags=purpose]
@@ -259,6 +258,13 @@ include::aerospace-subscribe.adoc[tags=synopsis]
 include::aerospace-subscribe.adoc[tags=purpose]
 include::aerospace-subscribe.adoc[tags=body]
 
+== summon-workspace
+----
+include::./aerospace-summon-workspace.adoc[tags=synopsis]
+----
+include::./aerospace-summon-workspace.adoc[tags=purpose]
+include::./aerospace-summon-workspace.adoc[tags=body]
+
 == swap
 ----
 include::aerospace-swap.adoc[tags=synopsis]
@@ -279,14 +285,6 @@ include::aerospace-test-not.adoc[tags=synopsis]
 ----
 include::aerospace-test-not.adoc[tags=purpose]
 include::aerospace-test-not.adoc[tags=body]
-
-
-== summon-workspace
-----
-include::./aerospace-summon-workspace.adoc[tags=synopsis]
-----
-include::./aerospace-summon-workspace.adoc[tags=purpose]
-include::./aerospace-summon-workspace.adoc[tags=body]
 
 == trigger-binding
 ----

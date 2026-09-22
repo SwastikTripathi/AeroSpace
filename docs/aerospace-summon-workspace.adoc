@@ -1,7 +1,7 @@
 = aerospace-summon-workspace(1)
 include::util/man-attributes.adoc[]
 // tag::purpose[]
-:manpurpose: Move the requested workspace to the focused monitor.
+:manpurpose: Move the requested workspace to the focused monitor
 // end::purpose[]
 :manname: aerospace-summon-workspace
 
@@ -17,12 +17,12 @@ aerospace summon-workspace [-h|--help] [--fail-if-noop] [--] <workspace>
 == Description
 
 // tag::body[]
-{manpurpose}
+{manpurpose}.
 The moved workspace becomes focused.
-The behavior is identical to Xmonad.
+The behavior is identical to that of XMonad.
 
-The command makes sense only in multi-monitor setup.
-In single monitor setup the command is identical to `workspace` command.
+The command makes sense only in a multi-monitor setup.
+In a single-monitor setup, the command is identical to the `workspace` command.
 
 // =========================================================== Options
 include::./util/conditional-options-header.adoc[]

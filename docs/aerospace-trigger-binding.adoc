@@ -2,7 +2,7 @@
 include::util/man-attributes.adoc[]
 :manname: aerospace-trigger-binding
 // tag::purpose[]
-:manpurpose: Trigger AeroSpace binding as if it was pressed by user
+:manpurpose: Trigger AeroSpace binding as if it was pressed by the user
 // end::purpose[]
 
 // =========================================================== Synopsis
@@ -19,7 +19,7 @@ aerospace trigger-binding [-h|--help] --mode <mode-id> [--] <binding>
 // tag::body[]
 {manpurpose}
 
-You can use aerospace-config command to inspect available bindings: +
+You can use the `aerospace config` command to inspect the available bindings: +
 `aerospace config --get mode.main.binding --keys`
 
 // =========================================================== Options
@@ -36,7 +36,7 @@ include::util/conditional-arguments-header.adoc[]
 // =========================================================== Examples
 include::util/conditional-examples-header.adoc[]
 
-* Run alphabetically first binding from config (useless and synthetic example): +
+* Run the alphabetically first binding from the config (useless and synthetic example): +
 `aerospace trigger-binding --mode main "$(aerospace config --get mode.main.binding --keys | head -1)"`
 * Trigger `alt-tab` binding: +
 `aerospace trigger-binding --mode main alt-tab`

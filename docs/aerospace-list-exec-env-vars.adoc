@@ -22,7 +22,7 @@ aerospace list-exec-env-vars [-h|--help]
 Examples of commands and callbacks:
 
 * `aerospace exec-and-forget` command
-* `exec-on-workspace-change-callback`
+* `exec-on-workspace-change` callback
 
 // end::body[]
 

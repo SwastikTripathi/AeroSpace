@@ -34,24 +34,24 @@ include::util/all-monitors-option.adoc[]
 --focused::
 Print the focused window.
 Please note that it is possible for no window to be in focus.
-In that case, error is reported.
+In that case, an error is reported.
 
 --workspace <workspace>...::
-Filter results to only print windows that belong to either of specified workspaces.
+Filter results to only print windows that belong to any of the specified workspaces.
 `<workspace>...` is a space-separated list of workspace names.
 +
 Possible values: +
 +
 . Workspace name
 . `focused` is a special workspace name that represents the focused workspace
-. `visible` is a special workspace name that represents all currently visible workspaces (In multi-monitor setup, there are multiple visible workspaces)
+. `visible` is a special workspace name that represents all currently visible workspaces (In a multi-monitor setup, there are multiple visible workspaces)
 
 include::util/monitor-option.adoc[]
 
---pid <pid>:: Filter results to only print windows that belong to the Application with specified `<pid>`
+--pid <pid>:: Filter results to only print windows that belong to the application with the specified `<pid>`
 
 --app-bundle-id <app-bundle-id>::
-Filter results to only print windows that belong to the Application with specified https://developer.apple.com/documentation/appstoreconnectapi/bundle_ids[Bundle ID]
+Filter results to only print windows that belong to the application with the specified https://developer.apple.com/documentation/appstoreconnectapi/bundle_ids[Bundle ID]
 +
 Deprecated (but still supported) flag name: `--app-id`
 
@@ -62,7 +62,7 @@ Incompatible with `--count`
 Incompatible with `--format`
 
 --json:: Output in JSON format.
-Can be used in combination with `--format` to specify which data to include into the json.
+Can be used in combination with `--format` to specify which data to include in the JSON.
 Incompatible with `--count`
 
 // =========================================================== Output Format
@@ -78,7 +78,7 @@ The following variables can be used inside `<output-format>`:
 
 %{window-id}:: Number. Window unique ID
 %{window-title}:: String. Window title
-%{window-is-fullscreen}:: Boolean. Is window in fullscreen by `aerospace fullscreen` command
+%{window-is-fullscreen}:: Boolean. Whether the window is in fullscreen mode (as set by the `aerospace fullscreen` command)
 %{window-layout}:: String. An alias for `%{window-parent-container-layout}`
 %{window-parent-container-layout}:: String. The layout (`v_tiles`, `h_tiles`, `v_accordion`, `h_accordion`, `floating`) of the window's parent container.
 
@@ -94,11 +94,11 @@ The following variables can be used inside `<output-format>`:
 %{workspace-root-container-layout}:: String. The layout (`v_tiles`, `h_tiles`, `v_accordion`, `h_accordion`) of the workspace the window belongs to.
 
 %{monitor-id}:: 1-based Number. Sequential number of the belonging monitor.
-%{monitor-appkit-nsscreen-screens-id}:: 1-based index of the belonging monitor in `NSScreen.screens` array. Useful for integration with other tools that might be using `NSScreen.screens` ordering (like sketchybar).
+%{monitor-appkit-nsscreen-screens-id}:: 1-based index of the belonging monitor in `NSScreen.screens` array. Useful for integration with other tools that might be using `NSScreen.screens` ordering (like SketchyBar).
 %{monitor-name}:: String. Name of the belonging monitor
 %{monitor-is-main}:: Boolean. `true` if the monitor is main.
 
-%{right-padding}:: A special variable which expands with a minimum number of spaces required to form a right padding in the appropriate column
+%{right-padding}:: A special variable which expands to the minimum number of spaces required to form a right padding in the appropriate column
 %{newline}:: Unicode U+000A newline symbol `\n`
 %{tab}:: Unicode U+0009 tab symbol `\t`
 

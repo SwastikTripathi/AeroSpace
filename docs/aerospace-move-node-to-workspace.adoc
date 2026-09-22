@@ -29,12 +29,12 @@ aerospace move-node-to-workspace [-h|--help] [--focus-follows-window] [--fail-if
 include::./util/conditional-options-header.adoc[]
 
 -h, --help:: Print help
---wrap-around:: Make it possible to jump between first and last workspaces using (next|prev)
---fail-if-noop:: Exit with non-zero code if move window to workspace it already belongs to
+--wrap-around:: Make it possible to jump between the first and last workspaces using `(next|prev)`
+--fail-if-noop:: Exit with non-zero code if moving the window to the workspace it already belongs to
 
 --focus-follows-window::
 Make sure that the window in question receives focus after moving.
-This flag is a shortcut for manually running `aerospace-workspace`/`aerospace-focus` after `move-node-to-workspace` successful execution.
+This flag is a shortcut for manually running `aerospace-workspace`/`aerospace-focus` after a successful `move-node-to-workspace` execution.
 
 --window-id <window-id>::
 include::./util/window-id-flag-desc.adoc[]
@@ -51,7 +51,7 @@ Incompatible with `--stdin`
 include::./util/conditional-arguments-header.adoc[]
 
 (next|prev):: Move window to next or prev workspace
-<workspace-name>:: Specifies workspace name where to move window to
+<workspace-name>:: Specifies the name of the workspace to move the window to
 
 // end::body[]
 

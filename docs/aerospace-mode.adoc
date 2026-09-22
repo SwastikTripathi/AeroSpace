@@ -19,7 +19,7 @@ aerospace mode [-h|--help] [--] <binding-mode>
 // tag::body[]
 {manpurpose}
 
-See xref:guide.adoc#binding-modes[the guide] for documentation about binding modes
+See xref:guide.adoc#binding-modes[the guide] for documentation about binding modes.
 // end::body[]
 
 // =========================================================== Options

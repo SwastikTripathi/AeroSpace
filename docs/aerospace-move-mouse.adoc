@@ -1,7 +1,7 @@
 = aerospace-move-mouse(1)
 include::./util/man-attributes.adoc[]
 // tag::purpose[]
-:manpurpose: Move mouse to the requested position
+:manpurpose: Move the mouse to the requested position
 // end::purpose[]
 :manname: aerospace-move-mouse
 
@@ -25,25 +25,25 @@ include::./util/conditional-options-header.adoc[]
 -h, --help:: Print help
 
 --fail-if-noop::
-Exit with non-zero exit code if mouse is already at the requested position.
+Exit with non-zero exit code if the mouse is already at the requested position.
 The flag is compatible only with `window-lazy-center` and `monitor-lazy-center` arguments.
 
 // =========================================================== Arguments
 include::./util/conditional-arguments-header.adoc[]
 
 <mouse-position>::
-Position to move mouse to.
+Position to move the mouse to.
 Possible values:
 +
-* `monitor-lazy-center`. Move mouse to the center of the focused monitor, *unless* it is already within the monitor boundaries.
-* `monitor-force-center`. Move mouse to the center of the focused monitor.
-* `window-lazy-center`. Move mouse to the center of the focused window, *unless* it is already within the window boundaries. Exit with non-zero code if no window is focused.
-* `window-force-center`. Move mouse to the center of the focused window. Exit with non-zero code if no window is focused.
+* `monitor-lazy-center`. Move the mouse to the center of the focused monitor, *unless* it is already within the monitor boundaries.
+* `monitor-force-center`. Move the mouse to the center of the focused monitor.
+* `window-lazy-center`. Move the mouse to the center of the focused window, *unless* it is already within the window boundaries. Exit with non-zero code if no window is focused.
+* `window-force-center`. Move the mouse to the center of the focused window. Exit with non-zero code if no window is focused.
 
 // =========================================================== Examples
 include::util/conditional-examples-header.adoc[]
 
-* Try to move mouse to the center of the window. If there is no window in focus, move mouse to the center of the monitor: +
+* Try to move the mouse to the center of the window. If there is no window in focus, move the mouse to the center of the monitor: +
 `aerospace move-mouse window-lazy-center || aerospace move-mouse monitor-lazy-center`
 
 // end::body[]

@@ -20,8 +20,8 @@ aerospace test-not [-h|--help] <lhs> ~= <rhs>
 // tag::body[]
 {manpurpose}
 
-The subcommand works exactly the same as the `test` subcommand, except the result (exit code) is negated.
-Please refer to the `test` subcomman documentation for more information.
+The subcommand works exactly the same as the `test` subcommand, except that the result (exit code) is negated.
+Please refer to the `test` subcommand documentation for more information.
 
 // end::body[]
 

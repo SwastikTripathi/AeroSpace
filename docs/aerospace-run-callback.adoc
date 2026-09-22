@@ -23,7 +23,7 @@ aerospace run-callback [-h|--help] (on-focus-changed|on-focused-monitor-changed)
 The command lets you manually re-run callbacks that AeroSpace normally invokes in response to events:
 
 * `on-window-detected` - callbacks defined by `on-window-detected` config option.
-  By default the callbacks are run for the focused window only.
+  By default, the callbacks are run for the focused window only.
   Pass `--for-every-window` to apply the callbacks to every currently known window
   (useful right after `reload-config` to retroactively apply new rules to already open windows),
   or pass `--window-id` to target a specific window.
@@ -31,7 +31,7 @@ The command lets you manually re-run callbacks that AeroSpace normally invokes i
 * `on-focused-monitor-changed` - runs commands listed under the `on-focused-monitor-changed` config key.
 
 The command forwards stdout and stderr of all commands run in the callback.
-That opens up one more usecase - you can use this command to see the output of your callbacks.
+That opens up one more use case - you can use this command to see the output of your callbacks.
 
 // =========================================================== Options
 include::./util/conditional-options-header.adoc[]

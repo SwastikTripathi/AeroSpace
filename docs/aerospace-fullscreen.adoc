@@ -21,7 +21,7 @@ aerospace fullscreen [-h|--help] off [--window-id <window-id>] [--fail-if-noop]
 // tag::body[]
 {manpurpose}
 
-Switching to a different tiling window within the same workspace while the current focused window is in fullscreen mode results in the fullscreen window exiting fullscreen mode.
+Switching to a different tiling window within the same workspace while the currently focused window is in fullscreen mode results in the fullscreen window exiting fullscreen mode.
 
 // =========================================================== Options
 include::./util/conditional-options-header.adoc[]
@@ -38,7 +38,7 @@ include::./util/conditional-arguments-header.adoc[]
 
 on, off::
 `on` means enter fullscreen mode. `off` means exit fullscreen mode.
-Toggle between the two if not specified
+Toggle between the two if not specified.
 
 // end::body[]
 

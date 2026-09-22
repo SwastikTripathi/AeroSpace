@@ -19,7 +19,7 @@ aerospace list-modes [-h|--help] [--current] [--count] [--json]
 // tag::body[]
 {manpurpose}
 
-See xref:guide.adoc#binding-modes[the guide] for documentation about binding modes
+See xref:guide.adoc#binding-modes[the guide] for documentation about binding modes.
 
 // =========================================================== Options
 include::util/conditional-options-header.adoc[]
