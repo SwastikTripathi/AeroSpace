@@ -9,6 +9,7 @@ final class MoveCommandTest: XCTestCase {
     func testParse() {
         assertNil(parseCommand("move --fail-if-fullscreen left").errorOrNil)
         assertNil(parseCommand("move --fail-if-macos-native-fullscreen --window-id 1 right").errorOrNil)
+        assertNil(parseCommand("move --boundaries-action create-implicit-container-or-fail left").errorOrNil)
     }
 
     func testFailIfFullscreen() async {
@@ -164,6 +165,186 @@ final class MoveCommandTest: XCTestCase {
                 ]),
             ]),
         )
+        assertEquals(result.exitCode.rawValue, 0)
+    }
+
+    func testCreateImplicitContainerOrFail() async {
+        config.enableNormalizationFlattenContainers = true
+        let workspace = Workspace.get(byName: name)
+        workspace.rootTilingContainer.apply {
+            assertEquals(TestWindow.new(id: 1, parent: $0).focusWindow(), true)
+            TestWindow.new(id: 2, parent: $0)
+            TestWindow.new(id: 3, parent: $0)
+        }
+
+        let result = await parseCommand("move --boundaries-action create-implicit-container-or-fail left").cmdOrDie.run(.defaultEnv, .emptyStdin)
+        assertEquals(
+            workspace.layoutDescription,
+            .workspace([
+                .h_tiles([
+                    .window(1),
+                    .h_tiles([.window(2), .window(3)]),
+                ]),
+            ]),
+        )
+        assertEquals(result.exitCode.rawValue, 0)
+    }
+
+    func testCreateImplicitContainerOrFail_accordionRootContainer() async {
+        config.enableNormalizationFlattenContainers = true
+        let workspace = Workspace.get(byName: name)
+        workspace.rootTilingContainer.apply {
+            $0.layout = .accordion
+            assertEquals(TestWindow.new(id: 1, parent: $0).focusWindow(), true)
+            TestWindow.new(id: 2, parent: $0)
+        }
+
+        let result = await parseCommand("move --boundaries-action create-implicit-container-or-fail left").cmdOrDie.run(.defaultEnv, .emptyStdin)
+        assertEquals(
+            workspace.layoutDescription,
+            .workspace([
+                .h_tiles([.window(1), .window(2)]),
+            ]),
+        )
+        assertEquals(result.exitCode.rawValue, 0)
+    }
+
+    func testCreateImplicitContainerOrFail_theImplicitContainerIsFlattened() async {
+        config.enableNormalizationFlattenContainers = true
+        let workspace = Workspace.get(byName: name)
+        workspace.rootTilingContainer.apply {
+            assertEquals(TestWindow.new(id: 1, parent: $0).focusWindow(), true)
+            TestWindow.new(id: 2, parent: $0)
+        }
+
+        let result = await parseCommand("move --boundaries-action create-implicit-container-or-fail left").cmdOrDie.run(.defaultEnv, .emptyStdin)
+        assertEquals(
+            workspace.layoutDescription,
+            .workspace([
+                .h_tiles([.window(1), .window(2)]),
+            ]),
+        )
+        assertEquals(result.exitCode.rawValue, 2)
+    }
+
+    func testCreateImplicitContainerOrFail_theImplicitContainerIsFlattened_right() async {
+        config.enableNormalizationFlattenContainers = true
+        let workspace = Workspace.get(byName: name)
+        workspace.rootTilingContainer.apply {
+            TestWindow.new(id: 1, parent: $0)
+            assertEquals(TestWindow.new(id: 2, parent: $0).focusWindow(), true)
+        }
+
+        let result = await parseCommand("move --boundaries-action create-implicit-container-or-fail right").cmdOrDie.run(.defaultEnv, .emptyStdin)
+        assertEquals(
+            workspace.layoutDescription,
+            .workspace([
+                .h_tiles([.window(1), .window(2)]),
+            ]),
+        )
+        assertEquals(result.exitCode.rawValue, 2)
+    }
+
+    func testCreateImplicitContainerOrFail_theImplicitContainerIsFlattened_nestedContainer() async {
+        config.enableNormalizationFlattenContainers = true
+        let workspace = Workspace.get(byName: name)
+        workspace.rootTilingContainer.apply {
+            assertEquals(TestWindow.new(id: 1, parent: $0).focusWindow(), true)
+            TilingContainer.newVTiles(parent: $0, adaptiveWeight: 1).apply {
+                TestWindow.new(id: 2, parent: $0)
+                TestWindow.new(id: 3, parent: $0)
+            }
+        }
+
+        let result = await parseCommand("move --boundaries-action create-implicit-container-or-fail left").cmdOrDie.run(.defaultEnv, .emptyStdin)
+        assertEquals(
+            workspace.layoutDescription,
+            .workspace([
+                .h_tiles([
+                    .window(1),
+                    .v_tiles([.window(2), .window(3)]),
+                ]),
+            ]),
+        )
+        assertEquals(result.exitCode.rawValue, 2)
+    }
+
+    func testCreateImplicitContainerOrFail_allMonitorsOuterFrameBoundaries() async {
+        config.enableNormalizationFlattenContainers = true
+        let workspace = Workspace.get(byName: name)
+        workspace.rootTilingContainer.apply {
+            assertEquals(TestWindow.new(id: 1, parent: $0).focusWindow(), true)
+            TestWindow.new(id: 2, parent: $0)
+        }
+
+        // There is a single monitor in tests, so the left monitor boundary is the outer frame boundary
+        let result = await parseCommand("move --boundaries all-monitors-outer-frame --boundaries-action create-implicit-container-or-fail left").cmdOrDie.run(.defaultEnv, .emptyStdin)
+        assertEquals(
+            workspace.layoutDescription,
+            .workspace([
+                .h_tiles([.window(1), .window(2)]),
+            ]),
+        )
+        assertEquals(result.stderr, [])
+        assertEquals(result.exitCode.rawValue, 2)
+    }
+
+    func testCreateImplicitContainerOrFail_singleWindow() async {
+        config.enableNormalizationFlattenContainers = true
+        let workspace = Workspace.get(byName: name)
+        workspace.rootTilingContainer.apply {
+            assertEquals(TestWindow.new(id: 1, parent: $0).focusWindow(), true)
+        }
+
+        let result = await parseCommand("move --boundaries-action create-implicit-container-or-fail left").cmdOrDie.run(.defaultEnv, .emptyStdin)
+        assertEquals(
+            workspace.layoutDescription,
+            .workspace([
+                .h_tiles([.window(1)]),
+            ]),
+        )
+        assertEquals(result.exitCode.rawValue, 2)
+    }
+
+    func testCreateImplicitContainerOrFail_flattenNormalizationIsDisabled() async {
+        config.enableNormalizationFlattenContainers = false
+        let workspace = Workspace.get(byName: name)
+        workspace.rootTilingContainer.apply {
+            assertEquals(TestWindow.new(id: 1, parent: $0).focusWindow(), true)
+            TestWindow.new(id: 2, parent: $0)
+        }
+
+        let result = await parseCommand("move --boundaries-action create-implicit-container-or-fail left").cmdOrDie.run(.defaultEnv, .emptyStdin)
+        assertEquals(
+            workspace.layoutDescription,
+            .workspace([
+                .h_tiles([
+                    .window(1),
+                    .h_tiles([.window(2)]),
+                ]),
+            ]),
+        )
+        assertEquals(result.stderr, ["Tip: create-implicit-container-or-fail will never cause the move command to fail since enable-normalization-flatten-containers is disabled"])
+        assertEquals(result.exitCode.rawValue, 0)
+    }
+
+    func testCreateImplicitContainerOrFail_singleWindow_flattenNormalizationIsDisabled() async {
+        config.enableNormalizationFlattenContainers = false
+        let workspace = Workspace.get(byName: name)
+        workspace.rootTilingContainer.apply {
+            assertEquals(TestWindow.new(id: 1, parent: $0).focusWindow(), true)
+        }
+
+        // The move is a no-op even though the normalization is disabled, but the tip promises that the action never
+        // fails in this mode
+        let result = await parseCommand("move --boundaries-action create-implicit-container-or-fail left").cmdOrDie.run(.defaultEnv, .emptyStdin)
+        assertEquals(
+            workspace.layoutDescription,
+            .workspace([
+                .h_tiles([.window(1)]),
+            ]),
+        )
+        assertEquals(result.stderr, ["Tip: create-implicit-container-or-fail will never cause the move command to fail since enable-normalization-flatten-containers is disabled"])
         assertEquals(result.exitCode.rawValue, 0)
     }
 

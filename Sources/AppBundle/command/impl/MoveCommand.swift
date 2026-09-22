@@ -61,6 +61,8 @@ struct MoveCommand: Command {
                 case .createImplicitContainer:
                     createImplicitContainerAndMoveWindow(window, workspace, direction)
                     return .succ
+                case .createImplicitContainerOrFail:
+                    return createImplicitContainerAndMoveWindowOrFail(window, workspace, io, direction)
             }
         case .allMonitorsOuterFrame:
             guard let (monitors, index) = window.nodeMonitor?.findRelativeMonitor(inDirection: direction) else {
@@ -74,7 +76,7 @@ struct MoveCommand: Command {
 
                 return MoveNodeToMonitorCommand(args: moveNodeToMonitorArgs).run(env, io)
             } else {
-                return hitAllMonitorsOuterFrameBoundaries(window, workspace, args, direction)
+                return hitAllMonitorsOuterFrameBoundaries(window, workspace, io, args, direction)
             }
     }
 }
@@ -82,6 +84,7 @@ struct MoveCommand: Command {
 @MainActor private func hitAllMonitorsOuterFrameBoundaries(
     _ window: Window,
     _ workspace: Workspace,
+    _ io: CmdIo,
     _ args: MoveCmdArgs,
     _ direction: CardinalDirection,
 ) -> BinaryExitCode {
@@ -91,6 +94,8 @@ struct MoveCommand: Command {
         case .createImplicitContainer:
             createImplicitContainerAndMoveWindow(window, workspace, direction)
             return .succ
+        case .createImplicitContainerOrFail:
+            return createImplicitContainerAndMoveWindowOrFail(window, workspace, io, direction)
     }
 }
 
@@ -127,6 +132,33 @@ private let moveOutMacosUnconventionalWindow = "moving macOS fullscreen, minimiz
         case .workspace(let parent):
             return hitWorkspaceBoundaries(window, parent, io, args, direction, env)
     }
+}
+
+@MainActor private func createImplicitContainerAndMoveWindowOrFail(
+    _ window: Window,
+    _ workspace: Workspace,
+    _ io: CmdIo,
+    _ direction: CardinalDirection,
+) -> BinaryExitCode {
+    if !config.enableNormalizationFlattenContainers {
+        // A workspace with a single tiling window is still a no-op (the emptied previous root container is detached
+        // no matter the normalization settings), but the tip promises that the action never fails in this mode.
+        createImplicitContainerAndMoveWindow(window, workspace, direction)
+        return .succ(io.err("Tip: create-implicit-container-or-fail will never cause the move command to fail since enable-normalization-flatten-containers is disabled"))
+    }
+    // The implicit container is always `.tiles` with `direction.orientation`, and it always gets exactly two children:
+    // the window and the previous root container. The window is a direct child of the previous root container whenever
+    // the orientations match. Otherwise, `moveOut` would have moved the window into the previous root container
+    // instead of hitting the boundaries.
+    // It means that if the previous root container has at most two children then it's left with at most one child, and
+    // the normalization gets rid of it: a single child container is flattened, an empty one is detached. The implicit
+    // container ends up being an exact copy of the previous root container, and the move changes nothing.
+    let prevRoot = workspace.rootTilingContainer
+    if prevRoot.orientation == direction.orientation && prevRoot.layout == .tiles && prevRoot.children.count <= 2 {
+        return .fail
+    }
+    createImplicitContainerAndMoveWindow(window, workspace, direction)
+    return .succ
 }
 
 @MainActor private func createImplicitContainerAndMoveWindow(

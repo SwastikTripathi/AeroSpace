@@ -38,8 +38,19 @@ The default is: `workspace`
 
 --boundaries-action <boundary-action>::
 Defines the behavior when requested to move across the `<boundary>`. +
-`<boundary-action>` possible values: `(stop|fail|create-implicit-container)`. +
+`<boundary-action>` possible values: `(stop|fail|create-implicit-container|create-implicit-container-or-fail)`. +
 The default is: `create-implicit-container`
++
+`create-implicit-container-or-fail` creates the implicit container the same way `create-implicit-container` does,
+but if the resulting layout would be identical to the current one,
+it exits with non-zero exit code and leaves the tree completely untouched.
+It happens when the previous root container is left with less than two children,
+and thus, it's immediately dropped by
+xref:guide.adoc#normalization[the `enable-normalization-flatten-containers` normalization],
+which makes the newly created implicit container an exact copy of it.
+See the "Examples" section. +
+The action never fails if `enable-normalization-flatten-containers` is disabled.
+A tip is printed to stderr in this case.
 
 --fail-if-fullscreen::
 Exit with non-zero code if the target window is fullscreen by the `fullscreen` command.
@@ -139,6 +150,36 @@ v_tiles
 the implicit container isn't created.
 +
 Instead, `window 2` would be moved to the monitor above the current.
+
+. *`create-implicit-container-or-fail` example*
++
+Given this layout
++
+----
+h_tiles
+├── window 1 (focused)
+└── window 2
+----
++
+`move --boundaries-action create-implicit-container-or-fail left` fails.
+`move --boundaries-action create-implicit-container left` would create the implicit `h_tiles` container
+that contains `window 1` and the previous root container,
+but `enable-normalization-flatten-containers` would flatten the previous root container
+into the implicit one, because `window 2` is its only remaining child.
+The layout would stay the very same.
++
+The command fails for a workspace that contains `window 1` alone for the same reason.
+The previous root container is left empty, and the implicit container takes its place unchanged.
++
+The same command succeeds for the layout below,
+because the previous root container keeps two children, and thus, it isn't flattened
++
+----
+h_tiles
+├── window 1 (focused)
+├── window 2
+└── window 3
+----
 
 // end::body[]
 
