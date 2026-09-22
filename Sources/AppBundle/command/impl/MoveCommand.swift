@@ -35,14 +35,43 @@ struct MoveCommand: Command {
                 } else {
                     return moveOut(tilingWindow: currentWindow, direction: direction, io, args, env)
                 }
-            case .floatingWindowsContainer: // floating window
-                return .fail(io.err("moving floating windows isn't yet supported")) // todo
+            case .floatingWindowsContainer:
+                return await moveFloatingWindow(currentWindow, target.workspace, direction, io, args)
             case .macosMinimizedWindowsContainer, .macosFullscreenWindowsContainer, .macosHiddenAppsWindowsContainer:
                 return .fail(io.err(moveOutMacosUnconventionalWindow))
             case .macosPopupWindowsContainer:
                 return .fail(io.err(bugPrompt())) // Impossible
         }
     }
+}
+
+@MainActor private func moveFloatingWindow(
+    _ window: Window,
+    _ workspace: Workspace,
+    _ direction: CardinalDirection,
+    _ io: CmdIo,
+    _ args: MoveCmdArgs,
+) async -> BinaryExitCode {
+    // Windows of invisible workspaces are hidden in the corner. Their position is restored once the workspace is visible
+    if !workspace.isVisible {
+        return .fail(io.err("moving floating windows of invisible workspaces isn't yet supported"))
+    }
+    guard let windowRect = try? await window.getAxRect(.nonCancellable) else {
+        return .fail(io.err("Failed to get rect of window '\(window.windowId)'"))
+    }
+    let orientation = direction.orientation
+    let monitorRect = workspace.workspaceMonitor.visibleRect
+    let pixels: CGFloat = args.floatingPixels.map { CGFloat($0) } ?? monitorRect.getDimension(orientation) * 0.1
+    let (position, minPosition, maxPosition): (CGFloat, CGFloat, CGFloat) = switch orientation {
+        case .h: (windowRect.minX, monitorRect.minX, monitorRect.maxX - windowRect.width)
+        case .v: (windowRect.minY, monitorRect.minY, monitorRect.maxY - windowRect.height)
+    }
+    // Stop at the monitor edge. But don't pull the window back if it's already beyond the edge
+    let newPosition = direction.isPositive
+        ? min(position + pixels, max(position, maxPosition))
+        : max(position - pixels, min(position, minPosition))
+    window.setAxFrame(windowRect.topLeftCorner.addingOffset(orientation, newPosition - position), nil)
+    return .succ
 }
 
 @MainActor private func hitWorkspaceBoundaries(

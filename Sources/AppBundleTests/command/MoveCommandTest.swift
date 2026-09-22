@@ -1,4 +1,5 @@
 @testable import AppBundle
+import AppKit
 import Common
 import XCTest
 
@@ -9,6 +10,11 @@ final class MoveCommandTest: XCTestCase {
     func testParse() {
         assertNil(parseCommand("move --fail-if-fullscreen left").errorOrNil)
         assertNil(parseCommand("move --fail-if-macos-native-fullscreen --window-id 1 right").errorOrNil)
+        assertNil(parseCommand("move --floating-pixels 50 left").errorOrNil)
+        assertEquals(
+            parseCommand("move --floating-pixels foo left").errorOrNil,
+            "ERROR: Failed to parse 'foo' CLI argument: Can't convert 'foo' to UInt32",
+        )
     }
 
     func testFailIfFullscreen() async {
@@ -319,6 +325,105 @@ final class MoveCommandTest: XCTestCase {
             ]),
         )
         assertEquals(focus.windowOrNil?.windowId, 1)
+    }
+
+    func testMoveFloatingWindow() async throws {
+        let window = TestWindow.new(
+            id: 1,
+            parent: Workspace.get(byName: name).floatingWindowsContainer,
+            rect: Rect(topLeftX: 500, topLeftY: 400, width: 200, height: 100),
+        )
+        assertEquals(window.focusWindow(), true)
+
+        assertEquals(await parseCommand("move --floating-pixels 50 left").cmdOrDie.run(.defaultEnv, .emptyStdin).exitCode.rawValue, 0)
+        assertEquals(try await window.getAxRect(.nonCancellable)?.topLeftCorner, CGPoint(x: 450, y: 400))
+
+        assertEquals(await parseCommand("move --floating-pixels 30 down").cmdOrDie.run(.defaultEnv, .emptyStdin).exitCode.rawValue, 0)
+        assertEquals(try await window.getAxRect(.nonCancellable)?.topLeftCorner, CGPoint(x: 450, y: 430))
+
+        assertEquals(await parseCommand("move --floating-pixels 20 up").cmdOrDie.run(.defaultEnv, .emptyStdin).exitCode.rawValue, 0)
+        assertEquals(try await window.getAxRect(.nonCancellable)?.topLeftCorner, CGPoint(x: 450, y: 410))
+
+        assertEquals(await parseCommand("move --floating-pixels 10 right").cmdOrDie.run(.defaultEnv, .emptyStdin).exitCode.rawValue, 0)
+        assertEquals(try await window.getAxRect(.nonCancellable)?.topLeftCorner, CGPoint(x: 460, y: 410))
+
+        assertEquals(try await window.getAxRect(.nonCancellable)?.size, CGSize(width: 200, height: 100))
+        assertEquals(Workspace.get(byName: name).floatingWindows.map(\.windowId), [1])
+    }
+
+    func testMoveFloatingWindow_defaultPixels() async throws {
+        let window = TestWindow.new(
+            id: 1,
+            parent: Workspace.get(byName: name).floatingWindowsContainer,
+            rect: Rect(topLeftX: 500, topLeftY: 400, width: 200, height: 100),
+        )
+        assertEquals(window.focusWindow(), true)
+
+        // 10% of the 1920x1080 test monitor
+        await parseCommand("move right").cmdOrDie.run(.defaultEnv, .emptyStdin)
+        assertEquals(try await window.getAxRect(.nonCancellable)?.topLeftCorner, CGPoint(x: 692, y: 400))
+
+        await parseCommand("move up").cmdOrDie.run(.defaultEnv, .emptyStdin)
+        assertEquals(try await window.getAxRect(.nonCancellable)?.topLeftCorner, CGPoint(x: 692, y: 292))
+    }
+
+    func testMoveFloatingWindow_stopAtMonitorEdge() async throws {
+        let window = TestWindow.new(
+            id: 1,
+            parent: Workspace.get(byName: name).floatingWindowsContainer,
+            rect: Rect(topLeftX: 1650, topLeftY: 20, width: 200, height: 100),
+        )
+        assertEquals(window.focusWindow(), true)
+
+        assertEquals(await parseCommand("move --floating-pixels 100 right").cmdOrDie.run(.defaultEnv, .emptyStdin).exitCode.rawValue, 0)
+        assertEquals(try await window.getAxRect(.nonCancellable)?.topLeftCorner, CGPoint(x: 1720, y: 20))
+
+        assertEquals(await parseCommand("move --floating-pixels 100 right").cmdOrDie.run(.defaultEnv, .emptyStdin).exitCode.rawValue, 0)
+        assertEquals(try await window.getAxRect(.nonCancellable)?.topLeftCorner, CGPoint(x: 1720, y: 20))
+
+        assertEquals(await parseCommand("move --floating-pixels 100 up").cmdOrDie.run(.defaultEnv, .emptyStdin).exitCode.rawValue, 0)
+        assertEquals(try await window.getAxRect(.nonCancellable)?.topLeftCorner, CGPoint(x: 1720, y: 0))
+    }
+
+    func testMoveFloatingWindow_windowIsAlreadyBeyondMonitorEdge() async throws {
+        let window = TestWindow.new(
+            id: 1,
+            parent: Workspace.get(byName: name).floatingWindowsContainer,
+            rect: Rect(topLeftX: 1800, topLeftY: 400, width: 200, height: 100),
+        )
+        assertEquals(window.focusWindow(), true)
+
+        // Don't pull the window back
+        await parseCommand("move --floating-pixels 50 right").cmdOrDie.run(.defaultEnv, .emptyStdin)
+        assertEquals(try await window.getAxRect(.nonCancellable)?.topLeftCorner, CGPoint(x: 1800, y: 400))
+
+        await parseCommand("move --floating-pixels 50 left").cmdOrDie.run(.defaultEnv, .emptyStdin)
+        assertEquals(try await window.getAxRect(.nonCancellable)?.topLeftCorner, CGPoint(x: 1750, y: 400))
+    }
+
+    func testMoveFloatingWindow_invisibleWorkspace() async throws {
+        let window = TestWindow.new(
+            id: 1,
+            parent: Workspace.get(byName: "b").floatingWindowsContainer,
+            rect: Rect(topLeftX: 500, topLeftY: 400, width: 200, height: 100),
+        )
+        assertEquals(Workspace.get(byName: "a").focusWorkspace(), true)
+
+        let result = await parseCommand("move --window-id 1 left").cmdOrDie.run(.defaultEnv, .emptyStdin)
+        assertEquals(result.exitCode.rawValue, 2)
+        assertEquals(result.stderr, ["moving floating windows of invisible workspaces isn't yet supported"])
+        assertEquals(try await window.getAxRect(.nonCancellable)?.topLeftCorner, CGPoint(x: 500, y: 400))
+    }
+
+    func testFloatingPixels_tilingWindow() async {
+        let root = Workspace.get(byName: name).rootTilingContainer.apply {
+            assertEquals(TestWindow.new(id: 1, parent: $0).focusWindow(), true)
+            TestWindow.new(id: 2, parent: $0)
+        }
+
+        let result = await parseCommand("move --floating-pixels 50 right").cmdOrDie.run(.defaultEnv, .emptyStdin)
+        assertEquals(result.exitCode.rawValue, 0)
+        assertEquals(root.layoutDescription, .h_tiles([.window(2), .window(1)]))
     }
 }
 
