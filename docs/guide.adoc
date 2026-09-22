@@ -70,6 +70,8 @@ AeroSpace tries to find the custom config in two locations:
 
 If the config is found in more than one location then the ambiguity is reported.
 
+You can also specify the config location explicitly with the <<aerospace-app-cli-flags,`--config-path` flag of `AeroSpace.app`>>.
+
 === Config samples
 
 Please see the following config samples:
@@ -821,6 +823,91 @@ on-window-detected = [
 == Common pitfall: keyboard keys handling
 
 If you can't make AeroSpace handle some keys in your config, please make sure that you don't have keys conflict with other software that might listen to global keys (e.g. skhd, Karabiner-Elements, Raycast)
+
+[#aerospace-app-cli-flags]
+== AeroSpace.app CLI flags
+
+`AeroSpace.app` (the window manager itself) accepts a few command line flags.
+Not to be confused with the `aerospace` CLI client and its subcommands (see xref:commands.adoc[AeroSpace Commands]).
+
+The flags are passed to the `AeroSpace.app` executable:
+
+----
+/Applications/AeroSpace.app/Contents/MacOS/AeroSpace [<options>]
+----
+
+-h, --help:: Print help
+
+-v, --version:: Print `AeroSpace.app` version
+
+--config-path <path>::
+Load the config from `<path>`.
+When the flag is specified, AeroSpace doesn't look for the config in the <<config-location,default locations>>.
+`AeroSpace.app` exits with an error on startup if `<path>` doesn't exist.
+Prefer an absolute `<path>`, since a relative path is resolved against the working directory of the `AeroSpace.app` process
+(it's `/` when `AeroSpace.app` is started with `open`).
++
+You can check which config is loaded with xref:commands.adoc#config[`aerospace config --config-path`].
+
+--read-only::
+Disable window management.
+`AeroSpace.app` doesn't move, resize, focus or close windows.
+Useful if you want to use only xref:commands.adoc#debug-windows[debug-windows] or other query commands (e.g. xref:commands.adoc#list-windows[list-windows]).
++
+The config is still loaded: key bindings still take their keys, and callbacks and `exec-*` commands still run.
+If you want AeroSpace to stay passive, combine the flag with `--config-path` that points to a minimal config without key bindings and callbacks.
+
+The flags themselves aren't persisted anywhere.
+If `AeroSpace.app` is started any other way (from Finder, from Spotlight, or at login with `start-at-login = true`), it runs without flags.
+The config that `--config-path` points to is applied in full, `start-at-login` included:
+if that config doesn't set `start-at-login = true`, `AeroSpace.app` removes itself from the login items until a config with `start-at-login = true` is loaded again.
+Keep `start-at-login = true` in the config you pass if you rely on AeroSpace starting at login.
+
+[#start-aerospace-app-with-flags]
+=== Start AeroSpace.app with flags
+
+Quit `AeroSpace.app` first.
+If `AeroSpace.app` is already running, `open` ignores the flags and only activates the running instance,
+while running the executable directly starts a second instance that fights with the first one over the windows.
+
+Then start `AeroSpace.app` with the `open` command.
+`open` passes the arguments after `--args` to `AeroSpace.app`:
+
+[source,bash]
+----
+open /Applications/AeroSpace.app --args --config-path ~/dotfiles/aerospace.toml
+----
+
+`open` doesn't show the errors that `AeroSpace.app` prints on startup (e.g. `<path> doesn't exist` for a wrong `--config-path`).
+If `AeroSpace.app` quits right after the start, redirect its stderr to a file and read the error there:
+
+[source,bash]
+----
+open --stderr /tmp/aerospace-stderr.txt /Applications/AeroSpace.app --args --config-path ~/dotfiles/aerospace.toml
+----
+
+`-h` and `-v` print to the terminal and exit right away, so run them with the executable directly.
+They don't start the window manager, so you don't need to quit `AeroSpace.app` for them:
+
+[source,bash]
+----
+/Applications/AeroSpace.app/Contents/MacOS/AeroSpace --version
+----
+
+[WARNING]
+====
+You can also start the window manager by running the executable directly from the terminal
+(e.g. `/Applications/AeroSpace.app/Contents/MacOS/AeroSpace --config-path ~/dotfiles/aerospace.toml`),
+but use it only as a debugging aid:
+
+* AeroSpace runs in the foreground and lives only as long as the terminal session.
+* macOS checks and requests the Accessibility permission for your terminal app, not for `AeroSpace.app`.
+If your terminal doesn't have the permission yet, AeroSpace also resets the Accessibility permission of `AeroSpace.app`
+(`tccutil reset Accessibility bobko.aerospace`),
+so you will need to grant it again the next time you start `AeroSpace.app` normally.
+* Ctrl-C or closing the terminal kills AeroSpace without restoring the windows that it hid in the corner of the screen
+(see <<emulation-of-virtual-workspaces>>).
+====
 
 [#socket-protocol]
 == Socket protocol
