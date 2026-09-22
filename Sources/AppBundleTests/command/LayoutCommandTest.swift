@@ -181,6 +181,39 @@ final class LayoutCommandTest: XCTestCase {
         assertEquals(workspace.rootTilingContainer.layoutDescription, .h_tiles([.window(1)]))
     }
 
+    func testFloatingToTiling_insertAfterTheMruWindow() async {
+        let workspace = Workspace.get(byName: name)
+        TestWindow.new(id: 4, parent: workspace.floatingWindowsContainer)
+        var window2: Window!
+        let root = workspace.rootTilingContainer.apply {
+            TestWindow.new(id: 1, parent: $0)
+            window2 = TestWindow.new(id: 2, parent: $0)
+            TestWindow.new(id: 3, parent: $0)
+        }
+        window2.markAsMostRecentChild()
+
+        await parseCommand("layout --window-id 4 tiling").cmdOrDie.run(.defaultEnv, .emptyStdin)
+        assertEquals(workspace.floatingWindows, [])
+        assertEquals(root.layoutDescription, .h_tiles([.window(1), .window(2), .window(4), .window(3)]))
+    }
+
+    func testFloatingToTiling_insertBeforeTheMruWindow() async {
+        config.defaultWindowsInsertionPoint = .beforeTheMruWindow
+        let workspace = Workspace.get(byName: name)
+        TestWindow.new(id: 4, parent: workspace.floatingWindowsContainer)
+        var window2: Window!
+        let root = workspace.rootTilingContainer.apply {
+            TestWindow.new(id: 1, parent: $0)
+            window2 = TestWindow.new(id: 2, parent: $0)
+            TestWindow.new(id: 3, parent: $0)
+        }
+        window2.markAsMostRecentChild()
+
+        await parseCommand("layout --window-id 4 tiling").cmdOrDie.run(.defaultEnv, .emptyStdin)
+        assertEquals(workspace.floatingWindows, [])
+        assertEquals(root.layoutDescription, .h_tiles([.window(1), .window(4), .window(2), .window(3)]))
+    }
+
     func testLayoutTilingOnTiledWindow_isNoop() async {
         let workspace = Workspace.get(byName: name)
         let root = workspace.rootTilingContainer.apply {

@@ -625,6 +625,38 @@ final class ConfigTest: XCTestCase {
         )
     }
 
+    func testParseDefaultWindowsInsertionPoint() {
+        assertEquals(defaultConfig.defaultWindowsInsertionPoint, .afterTheMruWindow)
+        assertEquals(parseConfig("").config.defaultWindowsInsertionPoint, .afterTheMruWindow)
+
+        let before = parseConfig(
+            """
+            default-windows-insertion-point = 'before-the-mru-window'
+            """,
+        )
+        assertEquals(before.errors, [])
+        assertEquals(before.config.defaultWindowsInsertionPoint, .beforeTheMruWindow)
+
+        let after = parseConfig(
+            """
+            default-windows-insertion-point = 'after-the-mru-window'
+            """,
+        )
+        assertEquals(after.errors, [])
+        assertEquals(after.config.defaultWindowsInsertionPoint, .afterTheMruWindow)
+
+        let bad = parseConfig(
+            """
+            default-windows-insertion-point = 'left'
+            """,
+        )
+        assertEquals(
+            bad.strErrors,
+            ["[ERROR] default-windows-insertion-point: Can\'t parse \'left\'.\nPossible values: (after-the-mru-window|before-the-mru-window)"],
+        )
+        assertEquals(bad.config.defaultWindowsInsertionPoint, .afterTheMruWindow)
+    }
+
     func testDeprecatedIndentForNestedContainers() {
         let errors = parseConfig(
             """
