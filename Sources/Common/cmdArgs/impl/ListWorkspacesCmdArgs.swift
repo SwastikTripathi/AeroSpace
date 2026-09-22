@@ -47,7 +47,11 @@ public struct ListWorkspacesCmdArgs: CmdArgs {
 }
 
 extension ListWorkspacesCmdArgs {
-    public var format: [InterToken<InterVar>] { _format.isEmpty ? [.interVar(.formatVar(.workspace(.workspaceName)))] : _format }
+    public var format: [InterToken<InterVar>] {
+        _format.isEmpty
+            ? [.interVar(.formatVar(.workspace(.workspaceName)))]
+            : _format.expandAllInterVar(for: .workspace)
+    }
 }
 
 func parseListWorkspacesCmdArgs(_ args: StrArrSlice) -> ParsedCmd<ListWorkspacesCmdArgs> {
@@ -71,6 +75,7 @@ func parseListWorkspacesCmdArgs(_ args: StrArrSlice) -> ParsedCmd<ListWorkspaces
                     .copy(\.focused, false)
                 : raw
         }
+        .filter("%{all} interpolation variable requires --json flag") { $0._format.contains(.interVar(.plainInterVar(.all))).implies($0.json) }
         .flatMap { if $0.json, let msg = getErrorIfFormatIsIncompatibleWithJson($0._format) { .failure(msg) } else { .cmd($0) } }
 }
 

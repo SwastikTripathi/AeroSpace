@@ -195,6 +195,7 @@ enum InterVarExpansionError: LocalizedError, CustomStringConvertible {
     case notPossible(String)
     case windowParentIllegalRelation(String)
     case rightPaddingCannotBeExpanded(String)
+    case allCannotBeExpanded(String)
 
     public var description: String {
         switch self {
@@ -203,6 +204,7 @@ enum InterVarExpansionError: LocalizedError, CustomStringConvertible {
             case .notPossible(let msg): msg
             case .windowParentIllegalRelation(let msg): msg
             case .rightPaddingCannotBeExpanded(let msg): msg
+            case .allCannotBeExpanded(let msg): msg
         }
     }
 
@@ -216,6 +218,8 @@ extension PlainInterVar {
             case .tab: .success(.string("\t"))
             case .rightPadding:
                 .failure(.rightPaddingCannotBeExpanded("\(PlainInterVar.rightPadding.rawValue.singleQuoted) interpolation variable cannot be expanded"))
+            case .all:
+                .failure(.allCannotBeExpanded("\(PlainInterVar.all.rawValue.singleQuoted) interpolation variable cannot be expanded"))
         }
     }
 }

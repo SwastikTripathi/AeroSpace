@@ -19,7 +19,7 @@ struct EchoCommand: Command {
                     switch err {
                         case .unknownInterpolationVariable: io.err(noWindowIsFocused)
                         case .notPossible, .nullParent,
-                             .rightPaddingCannotBeExpanded, .windowParentIllegalRelation: io.err(err.description)
+                             .rightPaddingCannotBeExpanded, .allCannotBeExpanded, .windowParentIllegalRelation: io.err(err.description)
                     }
                 }
             }) else { return .fail }

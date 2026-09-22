@@ -56,7 +56,7 @@ extension ListWindowsCmdArgs {
                 .interVar(.formatVar(.app(.appName))), .interVar(.plainInterVar(.rightPadding)), .literal(" | "),
                 .interVar(.formatVar(.window(.windowTitle))),
             ]
-            : _format
+            : _format.expandAllInterVar(for: .window)
     }
 }
 
@@ -75,6 +75,7 @@ func parseListWindowsCmdArgs(_ args: StrArrSlice) -> ParsedCmd<ListWindowsCmdArg
         .map { raw in
             raw.allAlias ? raw.copy(\.filteringOptions.monitors, [.all]).copy(\.allAlias, false) : raw // Normalize alias
         }
+        .filter("%{all} interpolation variable requires --json flag") { $0._format.contains(.interVar(.plainInterVar(.all))).implies($0.json) }
         .flatMap { if $0.json, let msg = getErrorIfFormatIsIncompatibleWithJson($0._format) { .failure(msg) } else { .cmd($0) } }
 }
 
@@ -211,6 +212,7 @@ public enum PlainInterVar: String, CaseIterable, Sendable, Equatable {
     case rightPadding = "right-padding"
     case newline = "newline"
     case tab = "tab"
+    case all = "all"
 }
 
 public enum InterVar: RawRepresentable, Equatable, CaseIterable, Sendable {
@@ -266,19 +268,30 @@ public enum AeroObjKind: CaseIterable, Sendable {
 }
 
 public func getAvailableInterVars(for kind: AeroObjKind) -> [String] {
-    _getAvailableInterVars(for: kind) + PlainInterVar.allCases.map(\.rawValue)
+    getAvailableFormatVars(for: kind).map(\.rawValue) + PlainInterVar.allCases.map(\.rawValue)
 }
 
-private func _getAvailableInterVars(for kind: AeroObjKind) -> [String] {
+private func getAvailableFormatVars(for kind: AeroObjKind) -> [FormatVar] {
     switch kind {
-        case .app: FormatVar.AppFormatVar.allCases.map(\.rawValue)
-        case .monitor: FormatVar.MonitorFormatVar.allCases.map(\.rawValue)
+        case .app: FormatVar.AppFormatVar.allCases.map(FormatVar.app)
+        case .monitor: FormatVar.MonitorFormatVar.allCases.map(FormatVar.monitor)
         case .workspace:
-            FormatVar.WorkspaceFormatVar.allCases.map(\.rawValue) +
-                _getAvailableInterVars(for: .monitor)
+            FormatVar.WorkspaceFormatVar.allCases.map(FormatVar.workspace) +
+                getAvailableFormatVars(for: .monitor)
         case .window:
-            FormatVar.WindowFormatVar.allCases.map(\.rawValue) +
-                _getAvailableInterVars(for: .workspace) +
-                _getAvailableInterVars(for: .app)
+            FormatVar.WindowFormatVar.allCases.map(FormatVar.window) +
+                getAvailableFormatVars(for: .workspace) +
+                getAvailableFormatVars(for: .app)
+    }
+}
+
+extension [InterToken<InterVar>] {
+    /// Replaces %{all} with every FormatVar available for the kind (PlainInterVars are not included)
+    func expandAllInterVar(for kind: AeroObjKind) -> [InterToken<InterVar>] {
+        flatMap { token in
+            token == .interVar(.plainInterVar(.all))
+                ? getAvailableFormatVars(for: kind).map { .interVar(.formatVar($0)) }
+                : [token]
+        }
     }
 }

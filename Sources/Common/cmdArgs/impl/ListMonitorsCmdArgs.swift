@@ -34,11 +34,12 @@ extension ListMonitorsCmdArgs {
                 .interVar(.formatVar(.monitor(.monitorId_oneBased))), .interVar(.plainInterVar(.rightPadding)), .literal(" | "),
                 .interVar(.formatVar(.monitor(.monitorName))),
             ]
-            : _format
+            : _format.expandAllInterVar(for: .monitor)
     }
 }
 
 func parseListMonitorsCmdArgs(_ args: StrArrSlice) -> ParsedCmd<ListMonitorsCmdArgs> {
     parseSpecificCmdArgs(ListMonitorsCmdArgs(rawArgs: args), args)
+        .filter("%{all} interpolation variable requires --json flag") { $0._format.contains(.interVar(.plainInterVar(.all))).implies($0.json) }
         .flatMap { if $0.json, let msg = getErrorIfFormatIsIncompatibleWithJson($0._format) { .failure(msg) } else { .cmd($0) } }
 }

@@ -31,6 +31,11 @@ final class ListWindowsTest: XCTestCase {
         assertEquals(parseCommand("list-windows --all --format '%{right-padding}' --json").errorOrNil, "%{right-padding} interpolation variable is not allowed when --json is used")
         assertEquals(parseCommand("list-windows --all --format '%{window-title} |' --json").errorOrNil, "Only interpolation variables and spaces are allowed in \'--format\' when \'--json\' is used")
         assertNil(parseCommand("list-windows --all --format '%{window-title}' --json").errorOrNil)
+
+        // %{all}
+        assertEquals(parseCommand("list-windows --all --format '%{all}'").errorOrNil, "%{all} interpolation variable requires --json flag")
+        assertNil(parseCommand("list-windows --all --format '%{all}' --json").errorOrNil)
+        assertNil(parseCommand("list-windows --all --format ' %{all} %{window-id} ' --json").errorOrNil)
     }
 
     func testInterpolationVariablesConsistency() {
@@ -117,6 +122,22 @@ final class ListWindowsTest: XCTestCase {
         let expected = JSONEncoder.aeroSpaceDefault.encodeToString([["window-id": 7]])
         assertEquals(result.exitCode.rawValue, 0)
         assertEquals(result.stdout, [expected])
+    }
+
+    func testRunJsonAll() async {
+        TestWindow.new(id: 7, parent: Workspace.get(byName: "a").rootTilingContainer)
+        let all = await parseCommand("list-windows --all --format '%{all}' --json").cmdOrDie.run(.defaultEnv, .emptyStdin)
+        let explicit = await parseCommand(
+            "list-windows --all --json --format '" +
+                "%{window-id} %{window-is-fullscreen} %{window-title} %{window-layout} %{window-parent-container-layout} " +
+                "%{workspace} %{workspace-is-focused} %{workspace-is-visible} %{workspace-root-container-layout} " +
+                "%{monitor-id} %{monitor-appkit-nsscreen-screens-id} %{monitor-name} %{monitor-is-main} " +
+                "%{app-bundle-id} %{app-name} %{app-pid} %{app-exec-path} %{app-bundle-path}'",
+        ).cmdOrDie.run(.defaultEnv, .emptyStdin)
+        assertEquals(explicit.exitCode.rawValue, 0)
+        assertEquals(all.exitCode.rawValue, 0)
+        assertEquals(all.stderr, [])
+        assertEquals(all.stdout, explicit.stdout)
     }
 
     func testRunFilterByWorkspaceName() async {

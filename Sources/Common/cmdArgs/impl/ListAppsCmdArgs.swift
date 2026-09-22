@@ -33,12 +33,13 @@ extension ListAppsCmdArgs {
                 .interVar(.formatVar(.app(.appBundleId))), .interVar(.plainInterVar(.rightPadding)), .literal(" | "),
                 .interVar(.formatVar(.app(.appName))),
             ]
-            : _format
+            : _format.expandAllInterVar(for: .app)
     }
 }
 
 func parseListAppsCmdArgs(_ args: StrArrSlice) -> ParsedCmd<ListAppsCmdArgs> {
     parseSpecificCmdArgs(ListAppsCmdArgs(rawArgs: args), args)
+        .filter("%{all} interpolation variable requires --json flag") { $0._format.contains(.interVar(.plainInterVar(.all))).implies($0.json) }
         .flatMap { if $0.json, let msg = getErrorIfFormatIsIncompatibleWithJson($0._format) { .failure(msg) } else { .cmd($0) } }
 }
 

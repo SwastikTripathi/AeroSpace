@@ -286,6 +286,7 @@ final class FormatTest: XCTestCase {
     func testPlainInterVarExpand() {
         assertPrimitive(PlainInterVar.newline.expandFormatVar(), .string("\n"))
         assertPrimitive(PlainInterVar.tab.expandFormatVar(), .string("\t"))
+        assertEquals(PlainInterVar.all.expandFormatVar().failureOrNil?.description, "'all' interpolation variable cannot be expanded")
     }
 
     func testInterVarExpandDelegates() {

@@ -19,6 +19,8 @@ final class ListWorkspacesTest: XCTestCase {
         assertEquals(parseCommand("list-workspaces --all --format %{workspace} --count").errorOrNil, "ERROR: Conflicting options: --count, --format")
         assertEquals(parseCommand("list-workspaces --empty").errorOrNil, "Mandatory option is not specified (--all|--focused|--monitor)")
         assertEquals(parseCommand("list-workspaces --all --focused --monitor mouse").errorOrNil, "ERROR: Conflicting options: --all, --focused, --monitor")
+        assertEquals(parseCommand("list-workspaces --all --format %{all}").errorOrNil, "%{all} interpolation variable requires --json flag")
+        assertNotNil(parseCommand("list-workspaces --all --format %{all} --json").cmdOrNil)
     }
 
     func testRunAll() async {
@@ -104,5 +106,19 @@ final class ListWorkspacesTest: XCTestCase {
         ])
         assertEquals(result.exitCode.rawValue, 0)
         assertEquals(result.stdout, [expected])
+    }
+
+    func testRunJsonAll() async {
+        TestWindow.new(id: 1, parent: Workspace.get(byName: "a").rootTilingContainer)
+        let all = await parseCommand("list-workspaces --all --format '%{all}' --json").cmdOrDie.run(.defaultEnv, .emptyStdin)
+        let explicit = await parseCommand(
+            "list-workspaces --all --json --format '" +
+                "%{workspace} %{workspace-is-focused} %{workspace-is-visible} %{workspace-root-container-layout} " +
+                "%{monitor-id} %{monitor-appkit-nsscreen-screens-id} %{monitor-name} %{monitor-is-main}'",
+        ).cmdOrDie.run(.defaultEnv, .emptyStdin)
+        assertEquals(explicit.exitCode.rawValue, 0)
+        assertEquals(all.exitCode.rawValue, 0)
+        assertEquals(all.stderr, [])
+        assertEquals(all.stdout, explicit.stdout)
     }
 }
