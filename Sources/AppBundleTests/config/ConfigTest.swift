@@ -698,8 +698,8 @@ final class ConfigTest: XCTestCase {
         )
         assertEquals(result.errors, [])
         assertEquals(result.config.keyMapping, KeyMapping(preset: .qwerty, rawKeyNotationToKeyCode: [
-            "q": .q,
-            "unicorn": .u,
+            "q": .keyCode(.q),
+            "unicorn": .keyCode(.u),
         ]))
         let binding = HotkeyBinding(.option, .u, .cmd(WorkspaceCommand(args: WorkspaceCmdArgs(target: .direct(.parse("unicorn").getOrDie())))))
         assertEquals(result.config.modes[mainModeId]?.bindings, [binding.descriptionWithKeyCode: binding])
@@ -713,7 +713,7 @@ final class ConfigTest: XCTestCase {
         ).strErrors
         assertEquals(errors1, [
             "[ERROR] key-mapping.key-notation-to-key-code: ' f' is invalid key notation",
-            "[ERROR] key-mapping.key-notation-to-key-code.q: 'qw' is invalid key code",
+            "[ERROR] key-mapping.key-notation-to-key-code.q: 'qw' is neither a key code nor a combination of modifiers",
         ])
 
         let dvorakResult = parseConfig(
@@ -723,7 +723,7 @@ final class ConfigTest: XCTestCase {
         )
         assertEquals(dvorakResult.errors, [])
         assertEquals(dvorakResult.config.keyMapping, KeyMapping(preset: .dvorak, rawKeyNotationToKeyCode: [:]))
-        assertEquals(dvorakResult.config.keyMapping.resolve()["quote"], .q)
+        assertEquals(dvorakResult.config.keyMapping.resolve()["quote"], .keyCode(.q))
         let colemakResult = parseConfig(
             """
             key-mapping.preset = 'colemak'
@@ -731,7 +731,59 @@ final class ConfigTest: XCTestCase {
         )
         assertEquals(colemakResult.errors, [])
         assertEquals(colemakResult.config.keyMapping, KeyMapping(preset: .colemak, rawKeyNotationToKeyCode: [:]))
-        assertEquals(colemakResult.config.keyMapping.resolve()["f"], .e)
+        assertEquals(colemakResult.config.keyMapping.resolve()["f"], .keyCode(.e))
+    }
+
+    func testParseModifierAliases() {
+        let result = parseConfig(
+            """
+            [key-mapping.key-notation-to-key-code]
+                hyper = 'ctrl-alt-shift-cmd'
+                meh = 'ctrl-alt-shift'
+                mod = 'alt'
+
+            [mode.main.binding]
+                hyper-c = 'workspace c'
+                meh-cmd-c = 'workspace c'
+                mod-shift-h = 'focus left'
+            """,
+        )
+        assertEquals(result.strErrors, ["[ERROR] mode.main.binding.meh-cmd-c: 'alt-ctrl-cmd-shift-c' Binding redeclaration"])
+        assertEquals(result.config.keyMapping, KeyMapping(preset: .qwerty, rawKeyNotationToKeyCode: [
+            "hyper": .modifiers([.control, .option, .shift, .command]),
+            "meh": .modifiers([.control, .option, .shift]),
+            "mod": .modifiers(.option),
+        ]))
+        let hyperC = HotkeyBinding([.control, .option, .shift, .command], .c, .cmd(WorkspaceCommand(args: WorkspaceCmdArgs(target: .direct(.parse("c").getOrDie())))))
+        let modShiftH = HotkeyBinding([.option, .shift], .h, .cmd(FocusCommand.new(direction: .left)))
+        assertEquals(result.config.modes[mainModeId]?.bindings, [
+            hyperC.descriptionWithKeyCode: hyperC,
+            modShiftH.descriptionWithKeyCode: modShiftH,
+        ])
+        assertEquals(result.config.modes[mainModeId]?.bindings["alt-shift-h"]?.descriptionWithKeyNotation, "mod-shift-h")
+
+        let errors = parseConfig(
+            """
+            [key-mapping.key-notation-to-key-code]
+                alt = 'ctrl-cmd'
+                dangling = 'ctrl-'
+                hyper = 'ctrl-alt-shift-cmd'
+                unicorn = 'ctrl-u'
+
+            [mode.main.binding]
+                alt-hyper = 'workspace a'
+                alt-hyper-k = 'workspace b'
+                hyper = 'workspace c'
+            """,
+        ).strErrors
+        assertEquals(errors, [
+            "[ERROR] key-mapping.key-notation-to-key-code.alt: 'alt' is a built-in modifier. It can't be redefined as a modifier alias",
+            "[ERROR] key-mapping.key-notation-to-key-code.dangling: 'ctrl-' is neither a key code nor a combination of modifiers",
+            "[ERROR] key-mapping.key-notation-to-key-code.unicorn: 'ctrl-u' is neither a key code nor a combination of modifiers",
+            "[ERROR] mode.main.binding.alt-hyper: Can't parse the key in 'alt-hyper' binding. Modifier aliases can be used only as a prefix",
+            "[ERROR] mode.main.binding.alt-hyper-k: Can't parse modifiers in 'alt-hyper-k' binding. Modifier aliases can be used only as a prefix",
+            "[ERROR] mode.main.binding.hyper: Can't parse the key in 'hyper' binding. Modifier aliases can be used only as a prefix",
+        ])
     }
 }
 

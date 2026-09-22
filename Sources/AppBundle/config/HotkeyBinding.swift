@@ -80,7 +80,7 @@ struct HotkeyBinding: Equatable, Sendable {
     }
 }
 
-func parseBindings(_ raw: OrderedJson, _ backtrace: ConfigBacktrace, _ c: inout ConfigParserContext, _ mapping: [String: Key]) -> [String: HotkeyBinding] {
+func parseBindings(_ raw: OrderedJson, _ backtrace: ConfigBacktrace, _ c: inout ConfigParserContext, _ mapping: [String: KeyCodeOrModifiers]) -> [String: HotkeyBinding] {
     guard let rawTable = raw.asDictOrNil else {
         c.errors += [expectedActualTypeDiagnostic(expected: .table, actual: raw.tomlType, backtrace)]
         return [:]
@@ -104,15 +104,23 @@ func parseBindings(_ raw: OrderedJson, _ backtrace: ConfigBacktrace, _ c: inout 
     return result
 }
 
-func parseBinding(_ raw: String, _ backtrace: ConfigBacktrace, _ mapping: [String: Key]) -> ResOrConfigParseDiagnostic<(NSEvent.ModifierFlags, Key)> {
-    let rawKeys = raw.split(separator: "-")
-    let modifiers: ResOrConfigParseDiagnostic<NSEvent.ModifierFlags> = rawKeys.dropLast()
-        .mapAllOrFailure {
-            modifiersMap[String($0)].toResult(.init(backtrace, "Can't parse modifiers in '\(raw)' binding"))
+func parseBinding(_ raw: String, _ backtrace: ConfigBacktrace, _ mapping: [String: KeyCodeOrModifiers]) -> ResOrConfigParseDiagnostic<(NSEvent.ModifierFlags, Key)> {
+    let rawKeys = raw.split(separator: "-").map(String.init)
+    let modifierAliasHint = "Modifier aliases can be used only as a prefix"
+    let modifiers: ResOrConfigParseDiagnostic<NSEvent.ModifierFlags> = rawKeys.dropLast().enumerated()
+        .mapAllOrFailure { index, rawModifier in
+            switch mapping[rawModifier] {
+                case .modifiers(let modifiers) where index == 0: .success(modifiers)
+                case .modifiers: .failure(.init(backtrace, "Can't parse modifiers in '\(raw)' binding. \(modifierAliasHint)"))
+                case .keyCode, nil: modifiersMap[rawModifier].toResult(.init(backtrace, "Can't parse modifiers in '\(raw)' binding"))
+            }
         }
         .map { NSEvent.ModifierFlags($0) }
-    let key: ResOrConfigParseDiagnostic<Key> = rawKeys.last.flatMap { mapping[String($0)] }
-        .toResult(.init(backtrace, "Can't parse the key in '\(raw)' binding"))
+    let key: ResOrConfigParseDiagnostic<Key> = switch rawKeys.last.flatMap({ mapping[$0] }) {
+        case .keyCode(let key): .success(key)
+        case .modifiers: .failure(.init(backtrace, "Can't parse the key in '\(raw)' binding. \(modifierAliasHint)"))
+        case nil: .failure(.init(backtrace, "Can't parse the key in '\(raw)' binding"))
+    }
     return modifiers.flatMap { modifiers -> ResOrConfigParseDiagnostic<(NSEvent.ModifierFlags, Key)> in
         key.flatMap { key -> ResOrConfigParseDiagnostic<(NSEvent.ModifierFlags, Key)> in
             .success((modifiers, key))

@@ -209,6 +209,23 @@ key-mapping.key-notation-to-key-code = {
     alt-unicorn = 'workspace wonderland' # (⁀ᗢ⁀)
 ----
 
+* `key-mapping.key-notation-to-key-code` also allows defining an alias for a combination of modifiers.
+The right-hand side must be either a single key or modifiers only (mixing keys and modifiers is not supported).
+Key aliases can be used only as a suffix of the binding, modifier aliases can be used only as a prefix of the binding.
++
+[source,toml]
+----
+key-mapping.key-notation-to-key-code = {
+    hyper = 'ctrl-alt-shift-cmd',
+    meh = 'ctrl-alt-shift',
+}
+
+[mode.main.binding]
+    hyper-c = 'workspace c'            # Same as 'ctrl-alt-shift-cmd-c'
+    meh-1 = 'move-node-to-workspace 1' # Same as 'ctrl-alt-shift-1'
+    # alt-hyper-k = 'workspace k'      # Error: 'hyper' must be a prefix
+----
+
 * For `dvorak` and `colemak` users, AeroSpace offers preconfigured presets.
 +
 [source,toml]
