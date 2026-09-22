@@ -38,6 +38,9 @@ struct ListWindowsCommand: Command {
             if let appId = args.filteringOptions.appIdFilter {
                 windows = windows.filter { $0.app.rawAppBundleId == appId }
             }
+            if let layout = args.filteringOptions.layoutFilter {
+                windows = windows.filter { $0.matchesLayoutDescription(layout) }
+            }
         }
 
         if args.outputOnlyCount {
@@ -64,5 +67,20 @@ struct ListWindowsCommand: Command {
                 }
             }
         }
+    }
+}
+
+extension Window {
+    fileprivate func matchesLayoutDescription(_ layout: LayoutCmdArgs.LayoutDescription) -> Bool {
+        let parent: ConventionalWindowParentCases? = switch windowParentCases {
+            case .tilingContainer(let it): .tilingContainer(it)
+            case .floatingWindowsContainer(let it): .floatingWindowsContainer(it)
+            case .macosFullscreenWindowsContainer,
+                 .macosHiddenAppsWindowsContainer,
+                 .macosMinimizedWindowsContainer,
+                 .macosPopupWindowsContainer,
+                 .unbound: nil
+        }
+        return parent?.matchesDescription(layout) == true
     }
 }

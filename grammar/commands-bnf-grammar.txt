@@ -145,6 +145,7 @@ aerospace -h;
     | --monitor <monitor_id>...
     | --pid <pid>
     | --app-bundle-id <app_bundle_id>
+    | --layout <layouts>
     ;
 <output_format> ::= {{{ true }}};
 

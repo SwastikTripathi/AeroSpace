@@ -31,6 +31,20 @@ final class ListWindowsTest: XCTestCase {
         assertEquals(parseCommand("list-windows --all --format '%{right-padding}' --json").errorOrNil, "%{right-padding} interpolation variable is not allowed when --json is used")
         assertEquals(parseCommand("list-windows --all --format '%{window-title} |' --json").errorOrNil, "Only interpolation variables and spaces are allowed in \'--format\' when \'--json\' is used")
         assertNil(parseCommand("list-windows --all --format '%{window-title}' --json").errorOrNil)
+
+        // --layout
+        assertNil(parseCommand("list-windows --workspace M --layout floating").errorOrNil)
+        assertEquals(parseCommand("list-windows --layout floating").errorOrNil, "Mandatory option is not specified (--focused|--all|--monitor|--workspace)")
+        assertEquals(parseCommand("list-windows --layout floating --focused").errorOrNil, "--focused conflicts with other \"filtering\" flags")
+        assertEquals(parseCommand("list-windows --layout floating --all").errorOrNil, "--all conflicts with \"filtering\" flags. Please use '--monitor all' instead of '--all' alias")
+        assertEquals(parseCommand("list-windows --monitor all --layout").errorOrNil, "ERROR: '--layout' must be followed by '<layout>'")
+        assertEquals(
+            parseCommand("list-windows --monitor all --layout foo").errorOrNil,
+            """
+            ERROR: Failed to parse 'foo' CLI argument: Can't parse 'foo'.
+                   Possible values: (accordion|tiles|horizontal|vertical|h_accordion|v_accordion|h_tiles|v_tiles|tiling|floating)
+            """,
+        )
     }
 
     func testInterpolationVariablesConsistency() {
@@ -182,5 +196,36 @@ final class ListWindowsTest: XCTestCase {
         let mismatching = await parseCommand("list-windows --monitor all --app-bundle-id com.unknown.app --format '%{window-id}'").cmdOrDie.run(.defaultEnv, .emptyStdin)
         assertEquals(mismatching.exitCode.rawValue, 0)
         assertEquals(mismatching.stdout, [])
+    }
+
+    func testRunFilterByLayout() async {
+        let workspace = Workspace.get(byName: "a")
+        workspace.rootTilingContainer.apply { // h_tiles
+            TestWindow.new(id: 1, parent: $0)
+            TilingContainer.newVTiles(parent: $0, adaptiveWeight: 1).apply {
+                $0.layout = .accordion
+                TestWindow.new(id: 2, parent: $0)
+            }
+        }
+        TestWindow.new(id: 3, parent: workspace.floatingWindowsContainer)
+        TestWindow.new(id: 4, parent: workspace.macOsNativeFullscreenWindowsContainer)
+        TestWindow.new(id: 5, parent: workspace.macOsNativeHiddenAppsWindowsContainer)
+
+        for layout in LayoutCmdArgs.LayoutDescription.allCases {
+            let expected: [String] = switch layout {
+                case .h_tiles, .tiles, .horizontal: ["1"]
+                case .v_accordion, .accordion, .vertical: ["2"]
+                case .v_tiles, .h_accordion: []
+                case .tiling: ["1", "2"]
+                case .floating: ["3"]
+            }
+            let result = await parseCommand("list-windows --workspace a --layout \(layout.rawValue) --format '%{window-id}'").cmdOrDie.run(.defaultEnv, .emptyStdin)
+            assertEquals(result.exitCode.rawValue, 0, additionalMsg: layout.rawValue)
+            assertEquals(result.stdout.sorted(), expected, additionalMsg: layout.rawValue)
+        }
+
+        let count = await parseCommand("list-windows --workspace a --layout tiling --count").cmdOrDie.run(.defaultEnv, .emptyStdin)
+        assertEquals(count.exitCode.rawValue, 0)
+        assertEquals(count.stdout, ["2"])
     }
 }

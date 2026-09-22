@@ -17,6 +17,7 @@ public struct ListWindowsCmdArgs: CmdArgs {
             "--workspace": ArgParser(\.filteringOptions.workspaces, parseWorkspaces),
             "--pid": singleValueSubArgParser(\.filteringOptions.pidFilter, "<pid>") { Int32($0).toResult("Can't convert to Int32") },
             "--app-bundle-id": singleValueSubArgParser(\.filteringOptions.appIdFilter, "<app-bundle-id>", Result.success),
+            "--layout": singleValueSubArgParser(\.filteringOptions.layoutFilter, "<layout>") { parseEnum($0, LayoutCmdArgs.LayoutDescription.self) },
 
             // Formatting flags
             "--format": formatParser(\._format, for: .window),
@@ -45,6 +46,7 @@ public struct ListWindowsCmdArgs: CmdArgs {
         public var workspaces: [WorkspaceFilter] = []
         public var pidFilter: Int32?
         public var appIdFilter: String?
+        public var layoutFilter: LayoutCmdArgs.LayoutDescription?
     }
 }
 
