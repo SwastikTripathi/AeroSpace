@@ -169,6 +169,55 @@ final class FocusCommandTest: XCTestCase {
         assertEquals(focus.windowOrNil?.windowId, 2)
     }
 
+    func testFocusAllMonitorsOuterFrame() async {
+        let monitors = setUpMonitorsForTests([
+            Rect(topLeftX: 0, topLeftY: 0, width: 1920, height: 1080),
+            Rect(topLeftX: 1920, topLeftY: 0, width: 1920, height: 1080),
+        ])
+        let workspaceA = Workspace.get(byName: "a").apply {
+            TestWindow.new(id: 1, parent: $0.rootTilingContainer)
+        }
+        assertTrue(workspaceA.focusWorkspace())
+        let workspaceB = Workspace.get(byName: "b").apply {
+            $0.rootTilingContainer.apply {
+                TestWindow.new(id: 2, parent: $0)
+                TestWindow.new(id: 3, parent: $0)
+            }
+        }
+        assertTrue(monitors[1].setActiveWorkspace(workspaceB))
+        assertEquals(workspaceB.mostRecentWindowRecursive?.windowId, 3) // The latest bound
+
+        // The focus enters the right monitor from the left, so the left-most window is focused instead of the MRU one
+        await parseCommand("focus --boundaries all-monitors-outer-frame right").cmdOrDie.run(.defaultEnv, .emptyStdin)
+        assertEquals(focus.windowOrNil?.windowId, 2)
+    }
+
+    func testFocusAllMonitorsOuterFrameWrapAround() async {
+        let monitors = setUpMonitorsForTests([
+            Rect(topLeftX: 0, topLeftY: 0, width: 1920, height: 1080),
+            Rect(topLeftX: 1920, topLeftY: 0, width: 1920, height: 1080),
+        ])
+        let workspaceA = Workspace.get(byName: "a").apply {
+            $0.rootTilingContainer.apply {
+                TestWindow.new(id: 1, parent: $0)
+                TestWindow.new(id: 2, parent: $0)
+            }
+        }
+        assertTrue(workspaceA.focusWorkspace())
+        var window3: Window!
+        let workspaceB = Workspace.get(byName: "b").apply {
+            window3 = TestWindow.new(id: 3, parent: $0.rootTilingContainer)
+        }
+        assertTrue(monitors[1].setActiveWorkspace(workspaceB))
+        assertTrue(window3.focusWindow())
+        assertEquals(workspaceA.mostRecentWindowRecursive?.windowId, 2) // The latest bound
+
+        // The focus wraps around to the left-most monitor and enters it from the left
+        await parseCommand("focus --boundaries all-monitors-outer-frame --boundaries-action wrap-around-all-monitors right")
+            .cmdOrDie.run(.defaultEnv, .emptyStdin)
+        assertEquals(focus.windowOrNil?.windowId, 1)
+    }
+
     func testFocusFindMruLeaf() async {
         let workspace = Workspace.get(byName: name)
         var startWindow: Window!

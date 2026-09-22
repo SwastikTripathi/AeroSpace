@@ -30,7 +30,7 @@ struct FocusCommand: Command {
                         .findLeafWindowRecursive(snappedTo: direction.opposite) else { return .fail(io.err(bugPrompt())) }
                     return .from(bool: windowToFocus.focusWindow())
                 } else {
-                    return hitWorkspaceBoundaries(target, io, args, direction)
+                    return await hitWorkspaceBoundaries(target, io, args, direction)
                 }
             case .windowId(let windowId):
                 if let windowToFocus = Window.get(byId: windowId) {
@@ -71,7 +71,7 @@ struct FocusCommand: Command {
     _ io: CmdIo,
     _ args: FocusCmdArgs,
     _ direction: CardinalDirection,
-) -> BinaryExitCode {
+) async -> BinaryExitCode {
     switch args.boundaries {
         case .workspace:
             return switch args.boundariesAction {
@@ -87,10 +87,10 @@ struct FocusCommand: Command {
             }
 
             if let targetMonitor = monitors.getOrNil(atIndex: index) {
-                return .from(bool: targetMonitor.activeWorkspace.focusWorkspace())
+                return .from(bool: await targetMonitor.activeWorkspace.focusWorkspace(snappedTo: direction.opposite, floatingAsTiling: args.floatingAsTiling))
             } else {
                 guard let wrapped = monitors.get(wrappingIndex: index) else { return .fail(io.err(bugPrompt("\(index) \(monitors)"))) }
-                return hitAllMonitorsOuterFrameBoundaries(target, io, args, direction, wrapped)
+                return await hitAllMonitorsOuterFrameBoundaries(target, io, args, direction, wrapped)
             }
     }
 }
@@ -101,7 +101,7 @@ struct FocusCommand: Command {
     _ args: FocusCmdArgs,
     _ direction: CardinalDirection,
     _ wrappedMonitor: MonitorInfo,
-) -> BinaryExitCode {
+) async -> BinaryExitCode {
     switch args.boundariesAction {
         case .stop:
             return .succ
@@ -110,8 +110,7 @@ struct FocusCommand: Command {
         case .wrapAroundTheWorkspace:
             return wrapAroundTheWorkspace(target, io, direction)
         case .wrapAroundAllMonitors:
-            wrappedMonitor.activeWorkspace.findLeafWindowRecursive(snappedTo: direction.opposite)?.markAsMostRecentChild()
-            return .from(bool: wrappedMonitor.activeWorkspace.focusWorkspace())
+            return .from(bool: await wrappedMonitor.activeWorkspace.focusWorkspace(snappedTo: direction.opposite, floatingAsTiling: args.floatingAsTiling))
     }
 }
 
@@ -190,6 +189,21 @@ private struct FloatingWindowData {
     let tilingParent: TilingContainer
     let adaptiveWeight: CGFloat
     let index: Int
+}
+
+extension Workspace {
+    /// Focuses the workspace and the window that is snapped to `direction` inside of it (e.g. `.left` focuses the
+    /// left-most window). Contrary to `focusWorkspace`, the MRU window is focused only if there is no snapped window
+    @MainActor func focusWorkspace(snappedTo direction: CardinalDirection, floatingAsTiling: Bool) async -> Bool {
+        let floatingWindows = floatingAsTiling ? await makeFloatingWindowsSeenAsTiling(workspace: self) : []
+        defer {
+            if floatingAsTiling {
+                restoreFloatingWindows(floatingWindows: floatingWindows, workspace: self)
+            }
+        }
+        findLeafWindowRecursive(snappedTo: direction)?.markAsMostRecentChild()
+        return focusWorkspace()
+    }
 }
 
 extension TreeNode {

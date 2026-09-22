@@ -68,6 +68,109 @@ final class FocusMonitorCommandTest: XCTestCase {
         assertEquals(focus.workspace.name, "b")
     }
 
+    func testFocusMonitorInDirection_focusesEdgeWindow() async {
+        let monitors = setUpMonitorsForTests([
+            Rect(topLeftX: 0, topLeftY: 0, width: 1920, height: 1080),
+            Rect(topLeftX: 1920, topLeftY: 0, width: 1920, height: 1080),
+        ])
+        let workspaceA = Workspace.get(byName: "a").apply {
+            TestWindow.new(id: 1, parent: $0.rootTilingContainer)
+        }
+        assertTrue(workspaceA.focusWorkspace())
+        let workspaceB = Workspace.get(byName: "b").apply {
+            $0.rootTilingContainer.apply {
+                TestWindow.new(id: 2, parent: $0)
+                TestWindow.new(id: 3, parent: $0)
+            }
+        }
+        assertTrue(monitors[1].setActiveWorkspace(workspaceB))
+        assertEquals(workspaceB.mostRecentWindowRecursive?.windowId, 3) // The latest bound
+
+        // The focus enters the right monitor from the left, so the left-most window is focused instead of the MRU one
+        await parseCommand("focus-monitor right").cmdOrDie.run(.defaultEnv, .emptyStdin)
+        assertEquals(focus.windowOrNil?.windowId, 2)
+
+        await parseCommand("focus-monitor left").cmdOrDie.run(.defaultEnv, .emptyStdin)
+        assertEquals(focus.windowOrNil?.windowId, 1)
+
+        // Wrapping around to the left enters the right-most monitor from the right
+        await parseCommand("focus-monitor --wrap-around left").cmdOrDie.run(.defaultEnv, .emptyStdin)
+        assertEquals(focus.windowOrNil?.windowId, 3)
+    }
+
+    func testFocusMonitorInDirection_focusesEdgeWindow_verticalMonitors() async {
+        let monitors = setUpMonitorsForTests([
+            Rect(topLeftX: 0, topLeftY: 0, width: 1920, height: 1080),
+            Rect(topLeftX: 0, topLeftY: 1080, width: 1920, height: 1080),
+        ])
+        assertTrue(Workspace.get(byName: "a").focusWorkspace())
+        let workspaceB = Workspace.get(byName: "b").apply {
+            TilingContainer.newVTiles(parent: $0.rootTilingContainer, adaptiveWeight: 1).apply {
+                TestWindow.new(id: 1, parent: $0)
+                TestWindow.new(id: 2, parent: $0)
+            }
+        }
+        assertTrue(monitors[1].setActiveWorkspace(workspaceB))
+        assertEquals(workspaceB.mostRecentWindowRecursive?.windowId, 2) // The latest bound
+
+        // The focus enters the bottom monitor from the top, so the top-most window is focused instead of the MRU one
+        await parseCommand("focus-monitor down").cmdOrDie.run(.defaultEnv, .emptyStdin)
+        assertEquals(focus.windowOrNil?.windowId, 1)
+    }
+
+    func testFocusMonitorInDirection_floatingWindowsAreSeenAsTiling() async {
+        let monitors = setUpMonitorsForTests([
+            Rect(topLeftX: 0, topLeftY: 0, width: 1920, height: 1080),
+            Rect(topLeftX: 1920, topLeftY: 0, width: 1920, height: 1080),
+        ])
+        let workspaceA = Workspace.get(byName: "a").apply {
+            TestWindow.new(id: 1, parent: $0.rootTilingContainer)
+        }
+        assertTrue(workspaceA.focusWorkspace())
+        var window2: Window!
+        let workspaceB = Workspace.get(byName: "b").apply {
+            $0.floatingWindowsContainer.apply {
+                window2 = TestWindow.new(id: 2, parent: $0, rect: Rect(topLeftX: 1940, topLeftY: 20, width: 100, height: 100))
+                TestWindow.new(id: 3, parent: $0, rect: Rect(topLeftX: 3740, topLeftY: 20, width: 100, height: 100))
+            }
+        }
+        assertTrue(monitors[1].setActiveWorkspace(workspaceB))
+        assertEquals(workspaceB.mostRecentWindowRecursive?.windowId, 3) // The latest bound
+
+        // The right monitor has no tiling windows. Still, its left-most floating window is focused
+        await parseCommand("focus-monitor right").cmdOrDie.run(.defaultEnv, .emptyStdin)
+        assertEquals(focus.windowOrNil?.windowId, 2)
+        assertTrue(window2.isFloating) // The window is restored back to floating
+    }
+
+    func testFocusMonitorNextPrevAndPatterns_focusMruWindow() async {
+        let monitors = setUpMonitorsForTests([
+            Rect(topLeftX: 0, topLeftY: 0, width: 1920, height: 1080),
+            Rect(topLeftX: 1920, topLeftY: 0, width: 1920, height: 1080),
+        ])
+        let workspaceA = Workspace.get(byName: "a").apply {
+            TestWindow.new(id: 1, parent: $0.rootTilingContainer)
+        }
+        assertTrue(workspaceA.focusWorkspace())
+        let workspaceB = Workspace.get(byName: "b").apply {
+            $0.rootTilingContainer.apply {
+                TestWindow.new(id: 2, parent: $0)
+                TestWindow.new(id: 3, parent: $0)
+            }
+        }
+        assertTrue(monitors[1].setActiveWorkspace(workspaceB))
+
+        // Contrary to (left|down|up|right), next|prev and <monitor-pattern> keep focusing the MRU window
+        await parseCommand("focus-monitor next").cmdOrDie.run(.defaultEnv, .emptyStdin)
+        assertEquals(focus.windowOrNil?.windowId, 3)
+
+        await parseCommand("focus-monitor prev").cmdOrDie.run(.defaultEnv, .emptyStdin)
+        assertEquals(focus.windowOrNil?.windowId, 1)
+
+        await parseCommand("focus-monitor secondary").cmdOrDie.run(.defaultEnv, .emptyStdin)
+        assertEquals(focus.windowOrNil?.windowId, 3)
+    }
+
     func testFocusMonitorNextPrev() async {
         let monitors = setUpMonitorsForTests([
             Rect(topLeftX: 0, topLeftY: 0, width: 1920, height: 1080),

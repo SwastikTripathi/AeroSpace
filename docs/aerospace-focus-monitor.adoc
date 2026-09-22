@@ -31,13 +31,16 @@ include::./util/conditional-options-header.adoc[]
 include::./util/conditional-arguments-header.adoc[]
 
 (left|down|up|right)::
-Focus monitor in direction relative to the focused monitor
+Focus monitor in direction relative to the focused monitor.
+The focus enters the target monitor from the opposite side, so `focus-monitor right` focuses the left-most window, `focus-monitor up` focuses the bottom-most window, etc.
+Similar to `aerospace-focus`, floating windows are perceived as part of xref:guide.adoc#tree[the tree]
 
 (next|prev)::
-Focus next|prev monitor in order they appear in tray icon
+Focus next|prev monitor in order they appear in tray icon.
+The most recently focused window of the target monitor is focused
 
 <monitor-pattern>...::
-Find the first matching monitor and focus it.
+Find the first matching monitor and focus its most recently focused window.
 Multiple monitor patterns is useful for different monitor configurations.
 Monitor patterns follow the same format as in `workspace-to-monitor-force-assignment` config option
 

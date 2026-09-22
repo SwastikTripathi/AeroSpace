@@ -44,7 +44,9 @@ include::util/conditional-options-header.adoc[]
 --boundaries <boundary>::
 Defines focus boundaries. +
 `<boundary>` possible values: `(workspace|all-monitors-outer-frame)`. +
-The default is: `workspace`
+The default is: `workspace`. +
+`all-monitors-outer-frame` lets the focus cross monitors.
+The focus enters the target monitor from the opposite side, so `focus right` focuses the left-most window of the monitor to the right
 
 --boundaries-action <action>::
 Defines the behavior when requested to cross the `<boundary>`. +

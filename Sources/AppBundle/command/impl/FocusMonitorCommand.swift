@@ -5,11 +5,18 @@ struct FocusMonitorCommand: Command {
     let args: FocusMonitorCmdArgs
     /*conforms*/ let shouldResetClosedWindowsCache = false
 
-    func run(_ env: CmdEnv, _ io: CmdIo) -> BinaryExitCode {
+    func run(_ env: CmdEnv, _ io: CmdIo) async -> BinaryExitCode {
         guard let target = args.resolveTargetOrReportError(env, io) else { return .fail }
-        return switch args.target.val.resolve(target.workspace.workspaceMonitor, wrapAround: args.wrapAround) {
-            case .success(let targetMonitor): .from(bool: targetMonitor.activeWorkspace.focusWorkspace())
-            case .failure(let msg): .fail(io.err(msg))
+        switch args.target.val.resolve(target.workspace.workspaceMonitor, wrapAround: args.wrapAround) {
+            case .success(let targetMonitor):
+                // The focus enters the target monitor from the opposite side. E.g. `focus-monitor right` focuses the
+                // left-most window. (next|prev|<monitor-pattern>) have no direction, so they focus the MRU window
+                guard let direction = args.target.val.directionOrNil else {
+                    return .from(bool: targetMonitor.activeWorkspace.focusWorkspace())
+                }
+                return .from(bool: await targetMonitor.activeWorkspace.focusWorkspace(snappedTo: direction.opposite, floatingAsTiling: true))
+            case .failure(let msg):
+                return .fail(io.err(msg))
         }
     }
 }
