@@ -135,6 +135,38 @@ Working with binding modes consists of two parts:
     equal = 'resize smart +50'
 ----
 
+[#parent-binding-mode]
+==== parent-binding-mode
+
+A binding mode can inherit all the bindings of another binding mode via `parent-binding-mode`.
+It allows you to declare the bindings that are common for several binding modes only once.
+
+[source,toml]
+----
+[mode.shared.binding]                # Bindings shared by 'main' and 'resize' binding modes
+    alt-1 = 'workspace 1'
+    alt-2 = 'workspace 2'
+
+[mode.main]
+    parent-binding-mode = 'shared'   # 'main' inherits all the bindings of 'shared'
+[mode.main.binding]
+    alt-r = 'mode resize'
+
+[mode.resize]
+    parent-binding-mode = 'shared'   # 'resize' inherits all the bindings of 'shared'
+[mode.resize.binding]
+    minus = 'resize smart -50'
+    equal = 'resize smart +50'
+    esc = 'mode main'
+----
+
+* The bindings declared in the binding mode itself take precedence over the inherited bindings.
+* The parent binding mode can have its own `parent-binding-mode`. The bindings are inherited transitively.
+* The parent binding mode is a regular binding mode.
+You can switch to it with xref:./commands.adoc#mode[mode] command, just like to any other binding mode.
+* The inherited bindings are indistinguishable from the bindings declared in the binding mode itself.
+E.g. they are reported by `aerospace config --get mode.main.binding`, and they can be triggered by xref:./commands.adoc#trigger-binding[trigger-binding].
+
 [#commands]
 === Commands
 

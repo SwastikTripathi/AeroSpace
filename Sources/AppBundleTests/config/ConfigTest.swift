@@ -142,6 +142,122 @@ final class ConfigTest: XCTestCase {
         assertEquals(result.config.modes[mainModeId], nil)
     }
 
+    func testParentBindingMode() {
+        let result = parseConfig(
+            """
+            [mode.shared.binding]
+                alt-h = 'focus left'
+                alt-j = 'focus down'
+
+            [mode.main]
+                parent-binding-mode = 'shared'
+            [mode.main.binding]
+                alt-k = 'focus up'
+
+            [mode.resize]
+                parent-binding-mode = 'shared'
+            [mode.resize.binding]
+                alt-j = 'focus right' # Overrides the binding from the parent mode
+            """,
+        )
+        assertEquals(result.errors, [])
+        let altH = HotkeyBinding(.option, .h, .cmd(FocusCommand.new(direction: .left)))
+        let altJ = HotkeyBinding(.option, .j, .cmd(FocusCommand.new(direction: .down)))
+        let altK = HotkeyBinding(.option, .k, .cmd(FocusCommand.new(direction: .up)))
+        let altJOverride = HotkeyBinding(.option, .j, .cmd(FocusCommand.new(direction: .right)))
+        assertEquals(
+            result.config.modes["shared"],
+            Mode(bindings: [altH.descriptionWithKeyCode: altH, altJ.descriptionWithKeyCode: altJ]),
+        )
+        assertEquals(
+            result.config.modes[mainModeId],
+            Mode(bindings: [altH.descriptionWithKeyCode: altH, altJ.descriptionWithKeyCode: altJ, altK.descriptionWithKeyCode: altK]),
+        )
+        assertEquals(
+            result.config.modes["resize"],
+            Mode(bindings: [altH.descriptionWithKeyCode: altH, altJOverride.descriptionWithKeyCode: altJOverride]),
+        )
+    }
+
+    func testParentBindingModeChain() {
+        let result = parseConfig(
+            """
+            [mode.main]
+                parent-binding-mode = 'a'
+            [mode.main.binding]
+                alt-h = 'focus left'
+
+            [mode.a]
+                parent-binding-mode = 'b'
+            [mode.a.binding]
+                alt-j = 'focus down'
+
+            [mode.b.binding]
+                alt-h = 'focus right'
+                alt-k = 'focus up'
+            """,
+        )
+        assertEquals(result.errors, [])
+        let altH = HotkeyBinding(.option, .h, .cmd(FocusCommand.new(direction: .left)))
+        let altJ = HotkeyBinding(.option, .j, .cmd(FocusCommand.new(direction: .down)))
+        let altK = HotkeyBinding(.option, .k, .cmd(FocusCommand.new(direction: .up)))
+        assertEquals(
+            result.config.modes[mainModeId],
+            Mode(bindings: [altH.descriptionWithKeyCode: altH, altJ.descriptionWithKeyCode: altJ, altK.descriptionWithKeyCode: altK]),
+        )
+    }
+
+    func testParentBindingModeParseError() {
+        let result = parseConfig(
+            """
+            [mode.main]
+                parent-binding-mode = 'unknown'
+            [mode.main.binding]
+                alt-h = 'focus left'
+
+            [mode.foo]
+                parent-binding-mode = 1
+            """,
+        )
+        assertEquals(
+            result.strErrors,
+            [
+                "[ERROR] mode.foo.parent-binding-mode: Expected type is \'String\'. But actual type is \'Int\'",
+                "[ERROR] mode.main.parent-binding-mode: Binding mode \'unknown\' doesn\'t exist",
+            ],
+        )
+        let binding = HotkeyBinding(.option, .h, .cmd(FocusCommand.new(direction: .left)))
+        assertEquals(
+            result.config.modes[mainModeId],
+            Mode(bindings: [binding.descriptionWithKeyCode: binding]),
+        )
+    }
+
+    func testParentBindingModeCycleError() {
+        let result = parseConfig(
+            """
+            [mode.main]
+                parent-binding-mode = 'b'
+
+            [mode.a]
+                parent-binding-mode = 'b'
+
+            [mode.b]
+                parent-binding-mode = 'a'
+
+            [mode.c]
+                parent-binding-mode = 'c'
+            """,
+        )
+        assertEquals(
+            result.strErrors,
+            [
+                "[ERROR] mode.a.parent-binding-mode: Cyclic \'parent-binding-mode\' dependency: a -> b -> a",
+                "[ERROR] mode.c.parent-binding-mode: Cyclic \'parent-binding-mode\' dependency: c -> c",
+            ],
+        )
+    }
+
     func testHotkeyParseError() {
         let result = parseConfig(
             """
