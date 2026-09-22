@@ -29,11 +29,14 @@ struct MacosNativeFullscreenCommand: Command {
                             "Tip: use --fail-if-noop to exit with non-zero exit code"))
             }
         }
-        window.asMacWindow().setNativeFullscreen(newState)
+        window.setNativeFullscreen(newState)
         guard let workspace = window.visualWorkspace else {
             return .fail(io.err(windowIsntPartOfTree(window)))
         }
         if newState { // Enter fullscreen
+            if window.layoutReason == .standard, let parent = window.parent {
+                window.layoutReason = .macos(prevParentKind: parent.kind)
+            }
             window.bind(to: workspace.macOsNativeFullscreenWindowsContainer, adaptiveWeight: 1, index: INDEX_BIND_LAST)
         } else { // Exit fullscreen
             switch window.layoutReason {

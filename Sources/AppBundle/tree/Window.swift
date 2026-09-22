@@ -40,6 +40,8 @@ open class Window: TreeNode, Hashable {
     func getCenter(_ cm: CancellationMode) async throws -> CGPoint? { try await getAxRect(cm)?.center }
 
     func setAxFrame(_ topLeft: CGPoint?, _ size: CGSize?) { die("Not implemented") }
+    func setNativeFullscreen(_ value: Bool) { die("Not implemented") }
+    func setNativeMinimized(_ value: Bool) { die("Not implemented") }
 }
 
 enum LayoutReason: Equatable {

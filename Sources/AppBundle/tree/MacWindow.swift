@@ -65,11 +65,11 @@ final class MacWindow: Window {
         try await macApp.dumpWindowAxInfo(windowId: windowId, cm)
     }
 
-    func setNativeFullscreen(_ value: Bool) {
+    override func setNativeFullscreen(_ value: Bool) {
         macApp.setNativeFullscreen(windowId, value)
     }
 
-    func setNativeMinimized(_ value: Bool) {
+    override func setNativeMinimized(_ value: Bool) {
         macApp.setNativeMinimized(windowId, value)
     }
 
