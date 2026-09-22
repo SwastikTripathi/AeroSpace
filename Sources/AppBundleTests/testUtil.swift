@@ -35,6 +35,7 @@ func setUpWorkspacesForTests() {
     check(focus.workspace.isEffectivelyEmpty)
     check(focus.workspace === Workspace.all.singleOrNil(), Workspace.all.map(\.description).joined(separator: ", "))
     check(mainMonitorInfo.setActiveWorkspace(focus.workspace))
+    resetFocusHistoryForTests()
 
     TestApp.shared.focusedWindow = nil
     TestApp.shared.windows = []

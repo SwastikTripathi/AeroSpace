@@ -36,6 +36,11 @@ private struct FrozenFocus: AeroAny, Equatable, Sendable {
     // monitorId is not part of the focus. We keep it here only for 'on-focused-monitor-changed' to work
     let monitorId_oneBased: Int
 
+    /// The focused element is either a window or an empty workspace
+    func isSameElement(as other: FrozenFocus) -> Bool {
+        windowId == other.windowId && (windowId != nil || workspaceName == other.workspaceName)
+    }
+
     @MainActor var live: LiveFocus { // Important: don't access focus.monitorId here. monitorId is not part of the focus. Always prefer workspace
         let window: Window? = windowId.flatMap { Window.get(byId: $0) }
         let workspace = Workspace.get(byName: workspaceName)
@@ -113,8 +118,31 @@ extension Workspace {
 @MainActor var prevFocusedWorkspace: Workspace? { _prevFocusedWorkspaceName.map { Workspace.get(byName: $0) } }
 
 // Used by focus-back-and-forth
-@MainActor private var _prevFocus: FrozenFocus? = nil
-@MainActor var prevFocus: LiveFocus? { _prevFocus?.live.takeIf { $0 != focus } }
+// Previously focused elements, the most recent first. Each element appears only once. The current focus isn't included
+@MainActor private var _focusHistory: [FrozenFocus] = []
+private let focusHistoryLimit = 100
+@MainActor var prevFocus: LiveFocus? {
+    let focus = focus
+    return _focusHistory.lazy
+        .filter { $0.windowId.map { Window.get(byId: $0) != nil } ?? true } // Skip closed windows
+        .map { $0.live }
+        .first { $0 != focus }
+}
+
+@MainActor private func pushToFocusHistory(_ oldFocus: FrozenFocus, newFocus: FrozenFocus) {
+    _focusHistory.removeAll { $0.isSameElement(as: oldFocus) || $0.isSameElement(as: newFocus) }
+    if !oldFocus.isSameElement(as: newFocus) { // The element stays the same if only the monitor has changed
+        _focusHistory.insert(oldFocus, at: 0)
+    }
+    if _focusHistory.count > focusHistoryLimit {
+        _focusHistory.removeLast(_focusHistory.count - focusHistoryLimit)
+    }
+}
+
+@MainActor func resetFocusHistoryForTests() {
+    _lastKnownFocus = _focus
+    _focusHistory = []
+}
 
 @MainActor private var onFocusChangedRecursionGuard = false
 // Should be called in refreshSession
@@ -128,7 +156,7 @@ extension Workspace {
     var hasFocusedWorkspaceChanged = false
     var hasFocusedMonitorChanged = false
     if frozenFocus != _lastKnownFocus {
-        _prevFocus = _lastKnownFocus
+        pushToFocusHistory(_lastKnownFocus, newFocus: frozenFocus)
         hasFocusChanged = true
     }
     if frozenFocus.workspaceName != _lastKnownFocus.workspaceName {
