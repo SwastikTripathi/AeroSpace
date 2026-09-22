@@ -30,9 +30,9 @@ private func getStubWorkspace(forPoint point: CGPoint) -> Workspace {
         .orDie("Can't create empty workspace")
 }
 
-final class Workspace: TreeNode, NonLeafTreeNodeObject, Hashable, Comparable {
+final class Workspace: TreeNode, NonLeafTreeNodeObject, Hashable {
     let name: String
-    nonisolated private let nameLogicalSegments: StringLogicalSegments
+    nonisolated fileprivate let nameLogicalSegments: StringLogicalSegments
     /// `assignedMonitorPoint` must be interpreted only when the workspace is invisible
     fileprivate var assignedMonitorPoint: CGPoint? = nil
 
@@ -44,7 +44,7 @@ final class Workspace: TreeNode, NonLeafTreeNodeObject, Hashable, Comparable {
     }
 
     @MainActor static var all: [Workspace] {
-        workspaceNameToWorkspace.values.sorted()
+        workspaceNameToWorkspace.values.sortedByUserOrder()
     }
 
     @MainActor static func get(byName name: String) -> Workspace {
@@ -55,10 +55,6 @@ final class Workspace: TreeNode, NonLeafTreeNodeObject, Hashable, Comparable {
             workspaceNameToWorkspace[name] = workspace
             return workspace
         }
-    }
-
-    nonisolated static func < (lhs: Workspace, rhs: Workspace) -> Bool {
-        lhs.nameLogicalSegments < rhs.nameLogicalSegments
     }
 
     override func getWeight(_ targetOrientation: Orientation) -> CGFloat {
@@ -99,6 +95,23 @@ final class Workspace: TreeNode, NonLeafTreeNodeObject, Hashable, Comparable {
     }
 
     nonisolated func hash(into hasher: inout Hasher) { hasher.combine(name) }
+}
+
+extension Sequence<Workspace> {
+    /// The order in which the workspaces are presented to the user:
+    /// - First, persistent workspaces go in the order they are listed in `persistent-workspaces`
+    /// - Second, phantom workspaces go in alphabetical order
+    @MainActor func sortedByUserOrder() -> [Workspace] {
+        let persistent = config.declaredPersistentWorkspaces
+        return sorted { (lhs: Workspace, rhs: Workspace) in
+            switch (persistent.firstIndex(of: lhs.name), persistent.firstIndex(of: rhs.name)) {
+                case (let lhsIndex?, let rhsIndex?): lhsIndex < rhsIndex
+                case (_?, nil): true
+                case (nil, _?): false
+                case (nil, nil): lhs.nameLogicalSegments < rhs.nameLogicalSegments
+            }
+        }
+    }
 }
 
 extension Workspace {

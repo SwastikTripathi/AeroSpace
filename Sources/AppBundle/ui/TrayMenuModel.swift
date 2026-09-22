@@ -34,6 +34,7 @@ enum AxPermissionStatus: Equatable {
             return ($0.activeWorkspace == focus.workspace && sortedMonitors.count > 1 ? "*" : "") + activeWorkspaceName
         }
         .joined(separator: " │ ")
+    let persistentWorkspaces = config.declaredPersistentWorkspaces
     TrayMenuModel.shared.workspaces = Workspace.all.map {
         let apps = $0.allLeafWindowsRecursive.map { $0.app.name?.takeIf { !$0.isEmpty } }.filterNotNil().toSet()
         let dash = " - "
@@ -49,6 +50,7 @@ enum AxPermissionStatus: Equatable {
             isFocused: focus.workspace == $0,
             isEffectivelyEmpty: $0.isEffectivelyEmpty,
             isVisible: $0.isVisible,
+            isPersistent: persistentWorkspaces.contains($0.name),
             hasFullscreenWindows: hasFullscreenWindows,
         )
     }
@@ -76,6 +78,7 @@ struct WorkspaceViewModel: Hashable {
     let isFocused: Bool
     let isEffectivelyEmpty: Bool
     let isVisible: Bool
+    let isPersistent: Bool
     let hasFullscreenWindows: Bool
 }
 

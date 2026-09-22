@@ -235,6 +235,10 @@ By specifying `config-version = 2`, you opt-in to the following behavior:
 * You unlock the possibility to specify `persistent-workspaces` config option in your config explicitly.
 * The fallback value of `persistent-workspaces` becomes an empty array
 (In `config-version = 1`, the fallback value of `persistent-workspaces` was inferred from the right hand side of your keyboard bindings. It's proved to be error-prone)
+* The order of `persistent-workspaces` defines the order in which the workspaces are presented to you:
+in the menu bar, in xref:./commands.adoc#list-workspaces[list-workspaces], and in xref:./commands.adoc#workspace[workspace next/prev].
+The workspaces that are not listed in `persistent-workspaces` go last in alphabetical order
+(In `config-version = 1`, all workspaces are ordered alphabetically, because the inferred fallback value of `persistent-workspaces` has no meaningful order)
 
 [#after-startup-command]
 === after-startup-command

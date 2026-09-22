@@ -63,6 +63,18 @@ struct Config: ConvenienceMutable {
     var onModeChanged: Shell<any Command> = .empty
 }
 
+extension Config {
+    /// Workspaces that the user has explicitly listed in `persistent-workspaces`, in the order they are listed in.
+    /// The order defines the order in which the workspaces are presented to the user
+    ///
+    /// `persistent-workspaces` can only be specified since `config-version = 2`.
+    /// In `config-version = 1`, the fallback value is inferred from the bindings in unspecified order,
+    /// which makes it unsuitable for ordering
+    var declaredPersistentWorkspaces: OrderedSet<String> {
+        configVersion >= ._2 ? persistentWorkspaces : []
+    }
+}
+
 struct FocusFollowsMouse: ConvenienceMutable {
     var enabled: Bool = false
 }

@@ -21,6 +21,9 @@ aerospace list-workspaces [-h|--help] --focused [--format <output-format>] [--co
 // tag::body[]
 {manpurpose}
 
+Workspaces that are listed in `persistent-workspaces` are printed first in the order they are listed in.
+The rest of the workspaces are printed last in alphabetical order
+
 // =========================================================== Options
 include::util/conditional-options-header.adoc[]
 

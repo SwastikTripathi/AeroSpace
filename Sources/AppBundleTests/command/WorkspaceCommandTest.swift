@@ -172,4 +172,39 @@ final class WorkspaceCommandTest: XCTestCase {
         assertEquals(result.exitCode.rawValue, 0)
         assertEquals(focus.workspace.name, "b")
     }
+
+    func testRelativeNext_noStdin_persistentWorkspacesOrder() async {
+        // Persistent workspaces go first in the order of "persistent-workspaces"
+        config.persistentWorkspaces = ["c", "b", "a"]
+        _ = Workspace.get(byName: "a")
+        _ = Workspace.get(byName: "b")
+        assertTrue(Workspace.get(byName: "c").focusWorkspace())
+
+        let result = await parseCommand("workspace next").cmdOrDie.run(.defaultEnv, .emptyStdin)
+        assertEquals(result.exitCode.rawValue, 0)
+        assertEquals(focus.workspace.name, "b")
+    }
+
+    func testRelativePrev_noStdin_persistentWorkspacesOrder() async {
+        config.persistentWorkspaces = ["c", "b", "a"]
+        _ = Workspace.get(byName: "b")
+        _ = Workspace.get(byName: "c")
+        assertTrue(Workspace.get(byName: "a").focusWorkspace())
+
+        let result = await parseCommand("workspace prev").cmdOrDie.run(.defaultEnv, .emptyStdin)
+        assertEquals(result.exitCode.rawValue, 0)
+        assertEquals(focus.workspace.name, "b")
+    }
+
+    func testRelativeNext_noStdin_phantomWorkspacesGoLast() async {
+        // "setUpWorkspacesForTests" is not listed in "persistent-workspaces", so it goes after "a"
+        config.persistentWorkspaces = ["c", "b", "a"]
+        _ = Workspace.get(byName: "b")
+        _ = Workspace.get(byName: "c")
+        assertTrue(Workspace.get(byName: "a").focusWorkspace())
+
+        let result = await parseCommand("workspace next").cmdOrDie.run(.defaultEnv, .emptyStdin)
+        assertEquals(result.exitCode.rawValue, 0)
+        assertEquals(focus.workspace.name, "setUpWorkspacesForTests")
+    }
 }

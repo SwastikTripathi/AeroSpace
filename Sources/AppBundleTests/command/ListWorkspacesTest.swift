@@ -31,6 +31,30 @@ final class ListWorkspacesTest: XCTestCase {
         assertEquals(result.stdout, ["a", "b", "setUpWorkspacesForTests"])
     }
 
+    func testRunAllPersistentWorkspacesOrder() async {
+        config.persistentWorkspaces = ["c", "b"]
+        _ = Workspace.get(byName: "a")
+        _ = Workspace.get(byName: "b")
+        _ = Workspace.get(byName: "c")
+        let result = await parseCommand("list-workspaces --all").cmdOrDie.run(.defaultEnv, .emptyStdin)
+        assertEquals(result.exitCode.rawValue, 0)
+        // Persistent workspaces go first in the order of "persistent-workspaces". The rest go last in alphabetical order
+        assertEquals(result.stdout, ["c", "b", "a", "setUpWorkspacesForTests"])
+    }
+
+    func testRunAllConfigVersion1Order() async {
+        // In config-version = 1, "persistent-workspaces" is inferred from the bindings in unspecified order.
+        // That's why it must not affect the order of the workspaces
+        config.configVersion = ._1
+        config.persistentWorkspaces = ["c", "b"]
+        _ = Workspace.get(byName: "a")
+        _ = Workspace.get(byName: "b")
+        _ = Workspace.get(byName: "c")
+        let result = await parseCommand("list-workspaces --all").cmdOrDie.run(.defaultEnv, .emptyStdin)
+        assertEquals(result.exitCode.rawValue, 0)
+        assertEquals(result.stdout, ["a", "b", "c", "setUpWorkspacesForTests"])
+    }
+
     func testRunVisible() async {
         TestWindow.new(id: 1, parent: Workspace.get(byName: "a").rootTilingContainer)
         let result = await parseCommand("list-workspaces --monitor all --visible").cmdOrDie.run(.defaultEnv, .emptyStdin)

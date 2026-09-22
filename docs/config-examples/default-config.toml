@@ -48,6 +48,9 @@ automatically-unhide-macos-hidden-apps = false
 
 # List of workspaces that should stay alive even when they contain no windows,
 # even when they are invisible.
+# The order of the list is the order in which the workspaces are presented to you
+# (in the menu bar, in 'list-workspaces', and in 'workspace next/prev').
+# The workspaces that are not in the list go last in alphabetical order
 # This config option is only available since 'config-version = 2'
 # Fallback value (if you omit the key): persistent-workspaces = []
 persistent-workspaces = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B",

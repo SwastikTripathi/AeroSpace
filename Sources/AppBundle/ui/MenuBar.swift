@@ -27,18 +27,15 @@ public func menuBar(viewModel: TrayMenuModel) -> some Scene { // todo should it 
                 Divider()
             }
             if let token: RunSessionGuard = .isServerEnabled {
+                // viewModel.workspaces are already sorted, persistent workspaces go first
+                let persistentWorkspaces = viewModel.workspaces.filter(\.isPersistent)
+                let phantomWorkspaces = viewModel.workspaces.filter { !$0.isPersistent }
                 Text("Workspaces:")
-                ForEach(viewModel.workspaces, id: \.name) { workspace in
-                    Button {
-                        Task.startUnstructured {
-                            try await runLightSession(.menuBarButton, token) { _ = Workspace.get(byName: workspace.name).focusWorkspace() }
-                        }
-                    } label: {
-                        Toggle(isOn: .constant(workspace.isFocused)) {
-                            Text(workspace.name + workspace.suffix).font(.system(.body, design: .monospaced))
-                        }
-                    }
+                ForEach(persistentWorkspaces, id: \.name) { workspaceButton(workspace: $0, token: token) }
+                if !persistentWorkspaces.isEmpty && !phantomWorkspaces.isEmpty {
+                    Divider()
                 }
+                ForEach(phantomWorkspaces, id: \.name) { workspaceButton(workspace: $0, token: token) }
                 Divider()
             }
             Button {
@@ -83,6 +80,19 @@ public func menuBar(viewModel: TrayMenuModel) -> some Scene { // todo should it 
                 Image(systemName: "exclamationmark.triangle.fill")
                     .resizable()
                     .aspectRatio(contentMode: .fit)
+        }
+    }
+}
+
+@MainActor
+private func workspaceButton(workspace: WorkspaceViewModel, token: RunSessionGuard) -> some View {
+    Button {
+        Task.startUnstructured {
+            try await runLightSession(.menuBarButton, token) { _ = Workspace.get(byName: workspace.name).focusWorkspace() }
+        }
+    } label: {
+        Toggle(isOn: .constant(workspace.isFocused)) {
+            Text(workspace.name + workspace.suffix).font(.system(.body, design: .monospaced))
         }
     }
 }

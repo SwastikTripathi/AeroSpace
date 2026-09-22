@@ -53,7 +53,7 @@ struct WorkspaceCommand: Command {
             : Workspace.all.filter { $0.workspaceMonitor.rect.topLeftCorner == currentMonitor.rect.topLeftCorner }
                 .toSet()
                 .union([current])
-                .sorted()
+                .sortedByUserOrder()
         if workspaces.isEmpty { throw "The list of workspaces is empty" }
         let index = workspaces.firstIndex(where: { $0 == target.workspace })
             .map { index in isNext ? index + 1 : index - 1 }
