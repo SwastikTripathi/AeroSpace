@@ -92,6 +92,18 @@ final class ListWindowsTest: XCTestCase {
         assertEquals(result.stdout, ["1"])
     }
 
+    func testRunFocusedParentContainerOrientation() async {
+        Workspace.get(byName: name).rootTilingContainer.apply {
+            assertEquals(TestWindow.new(id: 1, parent: $0).focusWindow(), true)
+            TestWindow.new(id: 2, parent: $0)
+        }
+        let listWindows = "list-windows --focused --format '%{window-parent-container-orientation}'"
+        assertEquals(await parseCommand(listWindows).cmdOrDie.run(.defaultEnv, .emptyStdin).stdout, ["horizontal"])
+
+        await parseCommand("layout vertical").cmdOrDie.run(.defaultEnv, .emptyStdin)
+        assertEquals(await parseCommand(listWindows).cmdOrDie.run(.defaultEnv, .emptyStdin).stdout, ["vertical"])
+    }
+
     func testRunAll() async {
         TestWindow.new(id: 1, parent: Workspace.get(byName: "a").rootTilingContainer)
         TestWindow.new(id: 2, parent: Workspace.get(byName: "b").rootTilingContainer)

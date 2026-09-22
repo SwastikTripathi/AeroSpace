@@ -208,6 +208,46 @@ final class FormatTest: XCTestCase {
         assertPrimitive(FormatVar.window(.windowLayout).expandFormatVar(obj: obj), .string("NULL-WINDOW-LAYOUT"))
     }
 
+    func testExpandWindowParentContainerOrientation() {
+        let root = Workspace.get(byName: name).rootTilingContainer
+        let window = TestWindow.new(id: 1, parent: root)
+        let obj = AeroObj.window(.forTest(window: window, title: nil))
+
+        root.changeOrientation(.h)
+        assertPrimitive(FormatVar.window(.windowParentContainerOrientation).expandFormatVar(obj: obj), .string("horizontal"))
+
+        root.changeOrientation(.v)
+        assertPrimitive(FormatVar.window(.windowParentContainerOrientation).expandFormatVar(obj: obj), .string("vertical"))
+
+        root.layout = .accordion
+        assertPrimitive(FormatVar.window(.windowParentContainerOrientation).expandFormatVar(obj: obj), .string("vertical"))
+    }
+
+    func testExpandWindowParentContainerOrientationNested() {
+        let root = Workspace.get(byName: name).rootTilingContainer
+        let window = TestWindow.new(id: 1, parent: TilingContainer.newVTiles(parent: root, adaptiveWeight: 1))
+        let obj = AeroObj.window(.forTest(window: window, title: nil))
+
+        assertEquals(root.orientation, .h)
+        assertPrimitive(FormatVar.window(.windowParentContainerOrientation).expandFormatVar(obj: obj), .string("vertical"))
+        assertPrimitive(FormatVar.workspace(.workspaceRootContainerOrientation).expandFormatVar(obj: obj), .string("horizontal"))
+    }
+
+    func testExpandWindowParentContainerOrientationNonTiling() {
+        let workspace = Workspace.get(byName: name)
+        let windows = [
+            TestWindow.new(id: 1, parent: workspace.floatingWindowsContainer),
+            TestWindow.new(id: 2, parent: workspace.macOsNativeFullscreenWindowsContainer),
+            TestWindow.new(id: 3, parent: workspace.macOsNativeHiddenAppsWindowsContainer),
+            TestWindow.new(id: 4, parent: macosMinimizedWindowsContainer),
+            TestWindow.new(id: 5, parent: macosPopupWindowsContainer),
+        ]
+        for window in windows {
+            let obj = AeroObj.window(.forTest(window: window, title: nil))
+            assertPrimitive(FormatVar.window(.windowParentContainerOrientation).expandFormatVar(obj: obj), .string("NULL-WINDOW-PARENT-CONTAINER-ORIENTATION"))
+        }
+    }
+
     func testExpandWindowToWorkspaceWhenWindowHasWorkspace() {
         let window = TestWindow.new(id: 1, parent: Workspace.get(byName: name).rootTilingContainer)
         let obj = AeroObj.window(.forTest(window: window, title: nil))
@@ -249,6 +289,15 @@ final class FormatTest: XCTestCase {
         assertPrimitive(FormatVar.workspace(.workspaceFocused).expandFormatVar(obj: obj), .bool(true))
         assertPrimitive(FormatVar.workspace(.workspaceVisible).expandFormatVar(obj: obj), .bool(true))
         assertPrimitive(FormatVar.workspace(.workspaceRootContainerLayout).expandFormatVar(obj: obj), .string("h_tiles"))
+    }
+
+    func testExpandWorkspaceRootContainerOrientation() {
+        let workspace = Workspace.get(byName: name)
+        let obj = AeroObj.workspace(workspace)
+        assertPrimitive(FormatVar.workspace(.workspaceRootContainerOrientation).expandFormatVar(obj: obj), .string("horizontal"))
+
+        workspace.rootTilingContainer.changeOrientation(.v)
+        assertPrimitive(FormatVar.workspace(.workspaceRootContainerOrientation).expandFormatVar(obj: obj), .string("vertical"))
     }
 
     func testExpandWorkspaceFocusedAndVisibleForOtherWorkspace() {

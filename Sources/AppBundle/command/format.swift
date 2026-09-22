@@ -160,6 +160,7 @@ extension FormatVar {
                     case .windowIsFullscreen: .success(.bool(w.window.isFullscreen))
                     case .windowTitle: .success(.string(w.title.orDie("Title wasn't prefetched")))
                     case .windowLayout, .windowParentContainerLayout: toLayoutResult(w: w.window)
+                    case .windowParentContainerOrientation: toOrientationResult(w: w.window)
                 }
             case (.workspace(let w), .workspace(let f)):
                 return switch f {
@@ -167,6 +168,7 @@ extension FormatVar {
                     case .workspaceVisible: .success(.bool(w.isVisible))
                     case .workspaceFocused: .success(.bool(focus.workspace == w))
                     case .workspaceRootContainerLayout: .success(.string(toLayoutString(tc: w.rootTilingContainer)))
+                    case .workspaceRootContainerOrientation: .success(.string(toOrientationString(tc: w.rootTilingContainer)))
                 }
             case (.monitor(let m), .monitor(let f)):
                 return switch f {
@@ -252,6 +254,27 @@ private func toLayoutResult(w: Window) -> Result<Primitive, InterVarExpansionErr
         case .macosNativeHiddenAppWindow: .success(.string("macos_native_window_of_hidden_app"))
         case .macosNativeMinimizedWindow: .success(.string("macos_native_minimized"))
         case .macosPopupWindow: .success(.string("NULL-WINDOW-LAYOUT"))
+
+        case .rootTilingContainer: .failure(.notPossible("Not possible"))
+        case .shimContainerRelation: .failure(.windowParentIllegalRelation("Window cannot have a shim container relation"))
+    }
+}
+
+private func toOrientationString(tc: TilingContainer) -> String {
+    switch tc.orientation {
+        case .h: LayoutCmdArgs.LayoutDescription.horizontal.rawValue
+        case .v: LayoutCmdArgs.LayoutDescription.vertical.rawValue
+    }
+}
+
+private func toOrientationResult(w: Window) -> Result<Primitive, InterVarExpansionError> {
+    guard let parent = w.parent else { return .failure(.nullParent("NULL-PARENT")) }
+    return switch getChildParentRelation(child: w, parent: parent) {
+        case .tiling(let tc): .success(.string(toOrientationString(tc: tc)))
+        // Non-tiling parent containers don't have an orientation
+        case .floatingWindow, .macosNativeFullscreenWindow, .macosNativeHiddenAppWindow,
+             .macosNativeMinimizedWindow, .macosPopupWindow:
+            .success(.string("NULL-WINDOW-PARENT-CONTAINER-ORIENTATION"))
 
         case .rootTilingContainer: .failure(.notPossible("Not possible"))
         case .shimContainerRelation: .failure(.windowParentIllegalRelation("Window cannot have a shim container relation"))

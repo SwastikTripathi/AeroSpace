@@ -72,6 +72,14 @@ final class ListWorkspacesTest: XCTestCase {
         assertEquals(result.stdout, ["setUpWorkspacesForTests"])
     }
 
+    func testRunFocusedRootContainerOrientation() async {
+        let listWorkspaces = "list-workspaces --focused --format '%{workspace-root-container-orientation}'"
+        assertEquals(await parseCommand(listWorkspaces).cmdOrDie.run(.defaultEnv, .emptyStdin).stdout, ["horizontal"])
+
+        await parseCommand("layout --root vertical").cmdOrDie.run(.defaultEnv, .emptyStdin)
+        assertEquals(await parseCommand(listWorkspaces).cmdOrDie.run(.defaultEnv, .emptyStdin).stdout, ["vertical"])
+    }
+
     func testRunMonitorFocused() async {
         TestWindow.new(id: 1, parent: Workspace.get(byName: "a").rootTilingContainer)
         let result = await parseCommand("list-workspaces --monitor focused").cmdOrDie.run(.defaultEnv, .emptyStdin)
