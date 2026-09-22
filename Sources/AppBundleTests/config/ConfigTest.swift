@@ -625,6 +625,47 @@ final class ConfigTest: XCTestCase {
         )
     }
 
+    func testParseAccordionPadding() {
+        assertEquals(defaultConfig.accordionPadding, .pixels(30))
+
+        let pixels = parseConfig(
+            """
+            accordion-padding = 50
+            """,
+        )
+        assertEquals(pixels.errors, [])
+        assertEquals(pixels.config.accordionPadding, .pixels(50))
+
+        let percent = parseConfig(
+            """
+            accordion-padding = '5%'
+            """,
+        )
+        assertEquals(percent.errors, [])
+        assertEquals(percent.config.accordionPadding, .percent(5))
+
+        let bad = parseConfig(
+            """
+            accordion-padding = '5px'
+            """,
+        )
+        assertEquals(
+            bad.strErrors,
+            ["[ERROR] accordion-padding: Can\'t parse accordion padding \'5px\'. Expected an integer number of pixels (e.g. 30) or a percentage (e.g. \'5%\')"],
+        )
+        assertEquals(bad.config.accordionPadding, .pixels(30))
+
+        assertEquals(
+            parseConfig("accordion-padding = '-5%'").strErrors,
+            ["[ERROR] accordion-padding: Can\'t parse accordion padding \'-5%\'. Expected an integer number of pixels (e.g. 30) or a percentage (e.g. \'5%\')"],
+        )
+
+        assertEquals(
+            parseConfig("accordion-padding = true").strErrors,
+            ["[ERROR] accordion-padding: Expected types are \'int\' or \'string\'. But actual type is \'bool\'"],
+        )
+    }
+
     func testDeprecatedIndentForNestedContainers() {
         let errors = parseConfig(
             """

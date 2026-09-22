@@ -349,6 +349,9 @@ You can navigate the windows in an `h_accordion` by using the `focus (left|right
 While in a `v_accordion`, you can navigate the windows using the `focus (up|down)` command.
 
 Accordion padding is configurable via `accordion-padding` option.
+The padding is either a number of pixels (`accordion-padding = 30`) or a percentage of the monitor size (`accordion-padding = '2%'`).
+The percentage is relative to the monitor width in horizontal accordions, and to the monitor height in vertical accordions (not counting the menu bar and the Dock).
+Percentages are handy if you use monitors of different sizes.
 
 [#normalization]
 === Normalization
